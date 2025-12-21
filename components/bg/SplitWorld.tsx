@@ -240,7 +240,7 @@ export default function SplitWorld() {
     const isSplit = p1Realm !== p2Realm
 
     return (
-        <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-black">
+        <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-white">
             <div className="relative h-full overflow-hidden transition-all duration-300 border-r border-white/20"
                 style={{ width: isSplit ? '50%' : (p1Realm === 'normal' ? '100%' : '0%') }}
             >
