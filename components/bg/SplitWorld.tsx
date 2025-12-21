@@ -6,6 +6,7 @@ import { realms } from "@/lib/realms"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Platform, PlayerState } from "@/types/types"
 import { useGameLoop } from "@/hooks/useGameLoop"
+import MobileControls from "../mobile/MobileControls"
 
 const GRAVITY = 1800
 const JUMP_FORCE = -800
@@ -149,7 +150,7 @@ export default function SplitWorld() {
             if (k === ' ' || k === 'w' || k === 'arrowup') inputs.current.jump = true
 
             if (k === 'r') {
-                // handleRiftToggle or smth
+                handleRiftToggle()
             }
         }
 
@@ -171,12 +172,48 @@ export default function SplitWorld() {
         }
     }, [])
 
+    const handleRiftToggle = () => {
+        const now = Date.now()
+
+        if (now - p1.current.lastRiftSwitch < RIFT_COOLDOWN) return
+
+        p1.current.lastRiftSwitch = now
+        playSound('rift')
+
+        p1.current.realm = p1.current.realm === 'normal' ? 'shadow' : 'normal'
+
+        if (p1.current.realm === 'shadow') openRift()
+            else closeRift()
+    }
+
+    // rendering pos
+    const getRenderStyle = (obj: {x: number, y: number, width: number, height: number}) => {
+        const cameraX = p1.current.x - (window.innerWidth/2) + (PLAYER_SIZE/2)
+
+        return {
+            left: obj.x - cameraX,
+            top: obj.y,
+            widht: obj.width,
+            height: obj.height
+        }
+    }
+
+    const cameraOffset = p1.current.x
+
     return (
-        <div className="flex w-full h-full  relative overflow-hidden">
-            <div className="relative h-full transition-all duration-500 ease-out"
+        <div className="flex w-full h-full  relative overflow-hidden select-none">
+            <div className="relative h-full transition-all duration-500 ease-out border-r border-white/10"
                 style={{ width: riftOpen ? '50%' : '100%' }}
             >
-                {/* <RealmScene realm={realms[0]} /> */}
+                <RealmScene realm={realms[0]} cameraOffset={cameraOffset} />
+
+                <GameLayer 
+                    p1={p1.current}
+                    p2={p2.current}
+                    platforms={platforms}
+                    cameraX={cameraOffset - (riftOpen ? window.innerWidth / 4 : window.innerWidth / 2)}
+                    viewportWidth={riftOpen ? window.innerWidth /2 : window.innerWidth}
+                />
             </div>
 
 
@@ -186,7 +223,81 @@ export default function SplitWorld() {
                     opacity: riftOpen ? 1 : 0
                 }}
             >
-                {/* <RealmScene realm={realms[1]} /> */}
+                <RealmScene realm={realms[1]} cameraOffset={cameraOffset} />
+                <GameLayer 
+                    p1={p1.current}
+                    p2={p2.current}
+                    platforms={platforms}
+                    cameraX={cameraOffset - window.innerWidth / 4}
+                    viewportWidth={window.innerWidth /2}
+                    isRift={true}
+                />
+            </div>
+
+            <MobileControls
+                onJump={() => inputs.current.jump = true}
+                onLeft={(active) => inputs.current.left = active}
+                onRight={(active) => inputs.current.right = active}
+                onRift={handleRiftToggle}
+                onAttack={() => {}}
+            />
+
+        </div>
+    )
+}
+
+function GameLayer({p1, p2, platforms, cameraX, viewportWidth, isRift}: any) {
+    const offsetX = cameraX
+
+    return (
+        <div className="absolute inset-0 pointer-events-none">
+
+            {platforms.map((plat: Platform) => {
+                const left = plat.x - offsetX
+                if (left < -500 || left > viewportWidth + 500) return null
+
+                return (
+                    <div key={plat.id} style={{
+                        position: 'absolute',
+                        left,
+                        top: plat.y,
+                        width: plat.width,
+                        height: plat.height,
+                        backgroundColor: BLOCK_COLOR,
+                        borderTop: '2px solid rgba(255, 255, 255, 0.2)'
+                    }} />
+                )
+            })}
+
+            <div style={{
+                position: 'absolute',
+                left: p1.x - offsetX,
+                top: p1.y,
+                width: PLAYER_SIZE,
+                height: PLAYER_SIZE,
+                backgroundColor: isRift ? '#fff' : '#4b4c9d',
+                border: '2px solid white',
+                boxShadow: isRift ? '0 0 15px white' : 'none',
+                transform: `scaleX(${p1.facingRight ? 1 : -1})`,
+                transition: 'background-color 0.2s'
+            }}>
+                <div className="w-full h-full relative">
+                    <div className="absolute top-2 right-2 w-2 h-2 bg-white rounded-full" />
+                </div>
+            </div>
+
+            <div style={{
+                position: 'absolute',
+                left: p2.x - offsetX,
+                top: p2.y,
+                width: PLAYER_SIZE,
+                height: PLAYER_SIZE,
+                backgroundColor: '#ff4444',
+                border: '2px solid white'
+            }}>
+                <div className="absolute -top-6 left-0 text-xs text-white bg-black/50 px-2 rounded">
+                    Enemy
+                </div>
             </div>
 
         </div>
