@@ -74,6 +74,8 @@ export default function SplitWorld() {
         x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100
     })
 
+    const cameras = useRef({normal: 100, rift: 600})
+
     const normalBuildings = useRef<Building[]>(generateSkyline('normal'))
     const riftBuildings = useRef<Building[]>(generateSkyline('rift'))
 
@@ -82,12 +84,32 @@ export default function SplitWorld() {
     const updatePhysics = (p: PlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
 
-        p.vy += GRAVITY * dt
         p.x += p.vx * dt
-        p.y += p.vy * dt
 
         const screenHeight = window.innerHeight
         const floorY = screenHeight
+
+        for (const b of buildings) {
+            const bTop = floorY - b.height
+
+            if (p.x < b.x + b.width &&
+                p.x + p.width > b.x &&
+                p.y + p.height > bTop + 10
+            ) {
+                if (p.vx > 0) {
+                    p.x = b.x - p.width
+                    p.vx = 0
+                } else if (p.vx < 0) {
+                    p.x = b.x + b.width
+                    p.vx =0 
+                }
+            }
+        }
+
+
+        p.vy += GRAVITY * dt
+        p.y += p.vy * dt
+
 
         p.isGrounded = false
 
@@ -119,73 +141,6 @@ export default function SplitWorld() {
         }
     }
 
-    // platforms check
-    // const platforms = useMemo(() => {
-    //     const plats: Platform[] = []
-
-    //     let currentX = 0
-    //     for (let i=0; i< 100; i++) {
-    //         const gap = 100 + Math.random() * 150
-    //         const width = 200 + Math.random() * 400
-    //         const height = 50 + Math.random() * 150
-
-    //         const yOffset = (Math.random() * 200) - 100
-
-    //         plats.push({
-    //             id: `p-${i}`,
-    //             x: currentX,
-    //             y: GROUND_Y - height + yOffset,
-    //             width,
-    //             height
-    //         })
-
-    //         currentX += width + gap
-    //     }
-
-    //     return plats
-    // }, [])
-
-    // // collisions
-    // const checkCollision = (p: PlayerState, dt: number) => {
-    //     if (p.y > window.innerHeight + 100) {
-    //         if (!p.isDead) {
-    //             p.isDead = true
-    //             console.log('Player died by falling :(')
-
-    //             setTimeout(() => {
-    //                 p.x = 100
-    //                 p.y = 300
-    //                 p.vy = 0
-    //                 p.isDead = false
-    //             }, 1000)
-    //         }
-    //         return
-
-
-    //     }
-
-    //     p.isGrounded = false
-
-    //     const nextX = p.x + p.vx * dt
-    //     const nextY = p.y + p.vy * dt
-
-
-    //     for (const plat of platforms) {
-    //         if (
-    //             p.x + PLAYER_SIZE/2 > plat.x &&
-    //             p.x + PLAYER_SIZE/2 < plat.x + plat.width &&
-    //             p.y + PLAYER_SIZE <= plat.y + 10 &&
-    //             nextY + PLAYER_SIZE >= plat.y
-    //         ) {
-    //             if (p.vy > 0) {
-    //                 p.y = plat.y - PLAYER_SIZE
-    //                 p.vy = 0
-    //                 p.isGrounded = true
-    //                 if (p.vy > 500) playSound('land')
-    //             }
-    //         }
-    //     }
-    // }
 
     useGameLoop((dt) => {
 
@@ -226,15 +181,13 @@ export default function SplitWorld() {
         updatePhysics(p1.current, dt, p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current)
         updatePhysics(p2.current, dt, p2.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current)
 
-        // p1.current.vy += GRAVITY * dt
-        // p1.current.x += p1.current.vx * dt
-        // p1.current.y += p1.current.vy * dt
+        if (p1.current.realm === 'normal'){
+            cameras.current.normal = p1.current.x
+        }
+        if (p1.current.realm === 'rift') {
+            cameras.current.rift = p1.current.x
+        }
 
-        // p2.current.vy += GRAVITY * dt
-        // p2.current.y += p2.current.vy * dt
-
-        // checkCollision(p1.current, dt)
-        // checkCollision(p2.current, dt)
 
         setTick(t => t + 1)
     })
@@ -283,54 +236,43 @@ export default function SplitWorld() {
         setP1Realm(newRealm)
     }
 
-    // // rendering pos
-    // const getRenderStyle = (obj: {x: number, y: number, width: number, height: number}) => {
-    //     const cameraX = p1.current.x - (window.innerWidth/2) + (PLAYER_SIZE/2)
-
-    //     return {
-    //         left: obj.x - cameraX,
-    //         top: obj.y,
-    //         widht: obj.width,
-    //         height: obj.height
-    //     }
-    // }
-
-    const cameraOffset = p1.current.x
 
     const isSplit = p1Realm !== p2Realm
 
     return (
         <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-black">
             <div className="relative h-full overflow-hidden transition-all duration-300 border-r border-white/20"
-                style={{ width: isSplit ? '50%' : '100%' }}
+                style={{ width: isSplit ? '50%' : (p1Realm === 'normal' ? '100%' : '0%') }}
             >
-                <RealmScene realm={p1Realm === 'normal' ? realms[0] : realms[1]} cameraOffset={cameraOffset} />
+                <RealmScene realm={realms[0]} cameraOffset={cameras.current.normal} />
 
                 <GameView
-                    cameraX={cameraOffset}
-                    player={p1.current}
-                    otherPlayer={p2.current}
-                    buildings={p1Realm === 'normal' ? normalBuildings.current : riftBuildings.current}
-                    isRift={p1Realm === 'rift'}
+                    cameraX={cameras.current.normal}
+                    player={p1Realm === 'normal' ? p1.current : p2.current}
+                    otherPlayer={p1Realm === 'normal' ? p2.current: p2.current}
+                    buildings={normalBuildings.current}
+                    isRift={false}
                     active={true}
+                    screenWidthDivider={isSplit ? 2 : 1}
                 />
             </div>
 
 
             <div className="relative h-full overflow-hidden transition-all duration-300"
                 style={{
-                    width: isSplit ? '50%' : '0%',
-                    opacity: isSplit ? 1 : 0
+                    width: isSplit ? '50%' : (p1Realm === 'rift' ? '100%' : '0%'),
+                    opacity: 1
                 }}
             >
-                <RealmScene realm={p2Realm === 'normal' ? realms[0] : realms[1]} cameraOffset={cameraOffset} />
+                <RealmScene realm={realms[1]} cameraOffset={cameras.current.rift} />
                 <GameView
-                    cameraX={p2.current.x}
-                    player={p2.current}
-                    otherPlayer={p1.current}
-                    buildings={p2Realm === 'normal' ? normalBuildings.current : riftBuildings.current}
-                    isRift={p2Realm === 'rift'}
-                    active={isSplit}
+                    cameraX={cameras.current.rift}
+                    player={p1Realm === 'rift' ? p1.current : p2.current}
+                    otherPlayer={p1Realm === 'rift' ? p2.current : p1.current}
+                    buildings={riftBuildings.current}
+                    isRift={true}
+                    active={true}
+                    screenWidthDivider={isSplit ? 2 : 1}
                 />
             </div>
 
@@ -345,21 +287,16 @@ export default function SplitWorld() {
             <div className="absolute top-4 left-4 text-white font-bold text-shadow pointer-events-none z-50">
                 P1: {p1Realm.toUpperCase()}
             </div>
-            {isSplit && (
-                <div className="absolute top-4 right-4 text-white font-bold text-shadow pointer-events-none z-50">
-                    P2: {p2Realm.toUpperCase()}
-                </div>
-            )}
 
         </div>
     )
 }
 
-function GameView({ cameraX, player, otherPlayer, buildings, isRift, active }: any) {
+function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider }: any) {
     if (!active) return null
 
 
-    const offsetX = cameraX - (window.innerWidth / (active ? (window.innerWidth < 768 ? 1 : 2) : 1)) / 2
+    const offsetX = cameraX - (window.innerWidth / screenWidthDivider) / 2
 
     return (
         <div className="absolute inset-0 pointer-events-none">
@@ -390,7 +327,7 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active }: a
                 )
             })}
 
-            <div style={{
+            {player.realm === (isRift ? 'rift' : 'normal') && <div style={{
                 position: 'absolute',
                 left: player.x - offsetX,
                 top: player.y,
@@ -405,9 +342,9 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active }: a
                         right: player.facingRight ? 4 : 'auto',
                         left: player.facingRight ? 'auto' : 4
                     }} />
-            </div>
+            </div>}
 
-            {otherPlayer.realm === player.realm &&<div style={{
+            {otherPlayer.realm === (isRift ? 'rift' : 'normal') &&<div style={{
                 position: 'absolute',
                 left: otherPlayer.x - offsetX,
                 top: otherPlayer.y,
