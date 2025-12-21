@@ -37,7 +37,6 @@ export type Building = {
     y: number
     width: number
     height: number
-    hp: number
     type: 'normal' | 'rift'
     color: string
 }
