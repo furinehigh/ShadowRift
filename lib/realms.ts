@@ -1,6 +1,6 @@
-import { RealConfig } from "@/types/types";
+import { RealmConfig } from "@/types/types";
 
-export const realms: RealConfig[] = [
+export const realms: RealmConfig[] = [
     {
         id: 'shadow',
         direction: -1,

@@ -1,4 +1,4 @@
-export type RealConfig = {
+export type RealmConfig = {
     id: 'shadow' | 'rift'
     direction: 1 | -1
     baseSpeed: number
