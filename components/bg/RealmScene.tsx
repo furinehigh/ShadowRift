@@ -16,7 +16,7 @@ export default function RealmScene({ realm }: { realm: RealmConfig }) {
     })
 
     return (
-        <div className="relative w-1/2 h-full overflow-hidden">
+        <div className="relative  h-full overflow-hidden">
             {realm.layers.map(l => (
                 <ParallaxLayer
                     key={l.src}

@@ -11,7 +11,8 @@ export default function ParallaxLayer({src, speed, offset}: Props) {
         <div style={{
             backgroundImage: `url(${src})`,
             backgroundRepeat: `repeat-x`,
-            backgroundPositionX: -offset * speed,
+            backgroundPosition: `${-offset * speed}px bottom`,
+            backgroundSize: 'auto 100%',
             position: 'absolute',
             inset: 0,
             willChange: 'background-position'
