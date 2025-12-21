@@ -9,13 +9,11 @@ export type RealmConfig = {
     }[]
 }
 
-export type RealmState = {
-    riftOpen: boolean
-    showMobileControls: boolean
-    toggleRift: () => void
-    openRift: () => void
-    closeRift: () => void
-    toggleControls: () => void
+export type RealmStoreState = {
+    p1Realm: 'normal' | 'rift'
+    p2Realm: 'normal' | 'rift'
+    setP1Realm: (r: 'normal' | 'rift') => void
+    setP2Realm: (r: 'normal' | 'rift') => void
 }
 
 export type PlayerState = {
@@ -23,11 +21,25 @@ export type PlayerState = {
     y: number
     vx: number
     vy: number
+    width: number
+    height: number
     isGrounded: boolean
     isDead: boolean
     facingRight: boolean
-    realm: 'normal' | 'shadow'
+    realm: 'normal' | 'rift'
     lastRiftSwitch: number
+    hp: number
+}
+
+export type Building = {
+    id: string
+    x: number
+    y: number
+    width: number
+    height: number
+    hp: number
+    type: 'normal' | 'rift'
+    color: string
 }
 
 export type Platform = {

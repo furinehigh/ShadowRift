@@ -3,11 +3,29 @@
 import { useRealmStore } from "@/store/realmStore"
 import { ControlProps } from "@/types/types"
 import { ArrowLeft, ArrowRight, ArrowUp, Radio, Zap } from "lucide-react"
+import { useEffect, useState } from "react"
 
 export default function MobileControls({onJump, onLeft, onRight, onRift, onAttack}: ControlProps) {
-    const show = useRealmStore(s => s.showMobileControls)
+    // const show = useRealmStore(s => s.showMobileControls)
 
-    if (!show) return null
+    // if (!show) return null
+
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => {
+            const hasTouch = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0
+            const isSmall = window.innerWidth < 1024
+            setIsMobile(hasTouch && isSmall)
+        }
+
+        checkMobile()
+
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    })
+
+    if (!isMobile) return null
 
     const btnClass = "w-16 h-16 rounded-full flex items-center justify-center text-white select-none active:scale-95 transition-transform backdrop-blur-sm border-2 border-[#4b4c9d]"
 

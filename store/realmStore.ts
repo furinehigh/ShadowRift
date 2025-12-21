@@ -1,12 +1,10 @@
-import { RealmState } from "@/types/types";
+import { RealmStoreState } from "@/types/types";
 import { create } from "zustand";
 
 
-export const useRealmStore = create<RealmState>((set) => ({
-    riftOpen: false,
-    showMobileControls: true,
-    toggleControls: () => set(s=> ({showMobileControls: !s.showMobileControls})),
-    toggleRift: () => set(s => ({ riftOpen: !s.riftOpen })),
-    openRift: () => set({ riftOpen: true }),
-    closeRift: () => set({ riftOpen: false })
+export const useRealmStore = create<RealmStoreState>((set) => ({
+    p1Realm: 'normal',
+    p2Realm: 'normal',
+    setP1Realm: (r) => set({p1Realm: r}),
+    setP2Realm: (r) => set({p2Realm: r})
 }))
