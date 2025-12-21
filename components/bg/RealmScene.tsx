@@ -6,14 +6,8 @@ import ParallaxLayer from "./ParallaxLayer"
 import { RealmConfig } from "@/types/types"
 
 
-export default function RealmScene({ realm }: { realm: RealmConfig }) {
-    const [offset, setOffset] = useState(0)
+export default function RealmScene({ realm, cameraOffset }: { realm: RealmConfig, cameraOffset: number }) {
 
-
-    useGameLoop((dt) => {
-        setOffset(o => o + realm.direction * realm.baseSpeed * dt)
-
-    })
 
     return (
         <div className="relative  h-full overflow-hidden">
@@ -21,7 +15,7 @@ export default function RealmScene({ realm }: { realm: RealmConfig }) {
                 <ParallaxLayer
                     key={l.src}
                     src={l.src}
-                    offset={offset}
+                    offset={cameraOffset}
                     speed={l.depth}
                 />
             ))}

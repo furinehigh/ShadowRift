@@ -38,3 +38,11 @@ export type Platform = {
     height: number
 }
 
+export type ControlProps = {
+    onJump: () => void
+    onLeft: (active: boolean) => void
+    onRight: (active: boolean) => void
+
+    onRift: () => void
+    onAttack: ()=> void
+}
