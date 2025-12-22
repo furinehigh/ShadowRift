@@ -93,7 +93,7 @@ function StartPage() {
               animate={{ scale: 1, opacity: 1 }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              transition={{ delay: 0.8, type: 'spring' }}
+              transition={{ delay: 0.2, type: 'spring' }}
               onClick={handlePlay}
               className='mt-12 group relative px-12 py-4 bg-white text-black font-bold text-xl skew-x-[-10deg] border-2 border-transparent hover:border-purple-500 hover:text-purple-600 tranistion-colors shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]'
             >
@@ -105,9 +105,9 @@ function StartPage() {
           </div>
 
           <div className='flex gap-4 md:gap-12 items-end justify-center'>
-            <BottomNavButton label='MULTIPLAYER' delay={0.5} />
-            <BottomNavButton label='FRIENDS' delay={0.6} />
-            <BottomNavButton label='PROFILE' delay={0.7} />
+            <BottomNavButton label='MULTIPLAYER' delay={0.2} />
+            <BottomNavButton label='FRIENDS' delay={0.3} />
+            <BottomNavButton label='PROFILE' delay={0.2} />
           </div>
         </div>
       )}
@@ -176,13 +176,14 @@ function BottomNavButton({ label, delay }: { label: string, delay: number }) {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       whileHover={{ y: -5 }}
+      whileTap='tap'
       transition={{ delay, type: 'spring' }}
       className='flex flex-col items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors w-24'
     >
 
       <div className='w-full h-[1px] bg-gradient-to-r from-transparent via-gray-600 to-transparent mb-2' />
 
-      <span className='text-xs font-bold tracking-wider'>{label}</span>
+      <span className='text-sm font-bold tracking-wider'>{label}</span>
     </motion.button>
   )
 }
