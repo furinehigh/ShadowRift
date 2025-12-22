@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import LoadingScreen from './LoadingScreen'
 import RealmScene from './bg/RealmScene'
 import { realms } from '@/lib/realms'
-import { Bot, Globe, Play, Settings, ShoppingBag, User, Users } from 'lucide-react'
+import { Play, Settings, ShoppingBag } from 'lucide-react'
 
 
 function StartPage() {

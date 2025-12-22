@@ -1,66 +1,100 @@
 'use client'
 
 import { motion } from "framer-motion"
-import { Gamepad2, Keyboard, Monitor, Volume2 } from "lucide-react"
+import { Gamepad2, Keyboard, Monitor, RotateCcw, Save, Volume2, X } from "lucide-react"
 import { useState } from "react"
 
 
 
 type Tab = 'graphics' | 'audio' | 'controls' | 'gameplay'
 
-export default function SettingsPage({onClose}: {onClose: () => void}) {
+export default function SettingsPage({ onClose }: { onClose: () => void }) {
     const [activeTab, setActiveTab] = useState<Tab>('graphics')
 
     return (
         <motion.div
-            initial={{opacity: 0, scale: 0.95}}
-            animate={{opacity: 1, scale: 1}}
-            exit={{opacity: 0, scale: 0.95}}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-12 bg-black/80 backdrop-blur-sm"
         >
             <div className="w-full max-w-5xl h-[80vh] flex flex-col md:flex-row bg-[#0f0f1a] border border-white/10 shadow-2xl overflow-hidden rounded-xl">
-                <div className="p-6 border-b border-white/5">
-                    <h2 className="text-2xl font-custom text-white tracking-widest text-shadow-glow">
-                        SETTINGS
-                    </h2>
+                <div className="w-full md:w-64 bg-black/20 border-r border-white/5 flex flex-col">
+
+                    <div className="p-6 border-b border-white/5">
+                        <h2 className="text-2xl font-custom text-white tracking-widest text-shadow-glow">
+                            SETTINGS
+                        </h2>
+                    </div>
+
+                    <div className="flex-1 py-4 space-y-1">
+                        <SidebarItem
+                            active={activeTab === 'graphics'}
+                            onClick={() => setActiveTab('graphics')}
+                            icon={<Monitor size={18} />}
+                            label='GRAPHICS'
+                        />
+                        <SidebarItem
+                            active={activeTab === 'audio'}
+                            onClick={() => setActiveTab('audio')}
+                            icon={<Volume2 size={18} />}
+                            label='AUDIO'
+                        />
+                        <SidebarItem
+                            active={activeTab === 'controls'}
+                            onClick={() => setActiveTab('controls')}
+                            icon={<Keyboard size={18} />}
+                            label='CONTROLS'
+                        />
+                        <SidebarItem
+                            active={activeTab === 'gameplay'}
+                            onClick={() => setActiveTab('gameplay')}
+                            icon={<Gamepad2 size={18} />}
+                            label='GAMEPLAY'
+                        />
+                    </div>
+
+                    <div className="p-4 border-t border-white/5 text-xs text-gray-500 font-mono text-center">
+                        VERSION 0.0.1 - BETA
+                    </div>
                 </div>
 
-                <div className="flex-1 py-4 space-y-1">
-                    <SidebarItem 
-                        active={activeTab === 'graphics'}
-                        onClick={() => setActiveTab('graphics')}
-                        icon={<Monitor size={18} />}
-                        label='GRAPHICS'
-                    />
-                    <SidebarItem 
-                        active={activeTab === 'audio'}
-                        onClick={() => setActiveTab('audio')}
-                        icon={<Volume2 size={18} />}
-                        label='AUDIO'
-                    />
-                    <SidebarItem 
-                        active={activeTab === 'controls'}
-                        onClick={() => setActiveTab('controls')}
-                        icon={<Keyboard size={18} />}
-                        label='CONTROLS'
-                    />
-                    <SidebarItem 
-                        active={activeTab === 'gameplay'}
-                        onClick={() => setActiveTab('gameplay')}
-                        icon={<Gamepad2 size={18} />}
-                        label='GAMEPLAY'
-                    />
-                </div>
+                <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-[#0f0f1a] to-[#1a1a2e]">
+                    <div className="h-16 flex items-center justify-between px-8 border-b border-white/5">
+                        <h3 className="text-xl text-purple-200 font-mono tracking-wider uppercase">
+                            {activeTab}
+                        </h3>
+                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
+                            <X size={24} />
+                        </button>
+                    </div>
 
-                
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                        {activeTab === 'graphics' && <GraphicsSettings />}
+                        {activeTab === 'audio' && <AudioSettings />}
+                        {activeTab === 'controls' && <ControlsSettings />}
+                        {activeTab === 'gameplay' && <GamePlaySettings />}
+                    </div>
+
+                    <div className="h-20 border-t border-white/5 bg-black/20 px-8 flex items-center justify-between">
+                        <button className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                            <RotateCcw size={16} /> RESET DEFAULTS
+                        </button>
+                        <button onClick={() => {}} className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
+                            <span className="flex items-center gap-2 skew-x-[10deg]">
+                                <Save size={18} /> APPLY CHANGES
+                            </span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </motion.div>
     )
 }
 
-function SidebarItem({active, icon, label, onClick}: any) {
+function SidebarItem({ active, icon, label, onClick }: any) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-mono tracking-wider transition-all duration-200`}
         >
@@ -175,7 +209,7 @@ function GamePlaySettings() {
 
 // some helpers
 
-function SettingRow({label, description, children}: any) {
+function SettingRow({ label, description, children }: any) {
     return (
         <div className="flex items-center justify-between group">
             <div>
@@ -189,7 +223,7 @@ function SettingRow({label, description, children}: any) {
     )
 }
 
-function RangeSlider({value}: {value: number}){
+function RangeSlider({ value }: { value: number }) {
     return (
         <div className="w-48 flex items-center gap-3">
             <input type="range" defaultValue={value} className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500" />
@@ -198,7 +232,7 @@ function RangeSlider({value}: {value: number}){
     )
 }
 
-function ToggleSwitch({checked} : {checked: boolean}) {
+function ToggleSwitch({ checked }: { checked: boolean }) {
     return (
         <div className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${checked ? 'bg-purple-600' : 'bg-gray-700'}`}>
             <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -206,7 +240,7 @@ function ToggleSwitch({checked} : {checked: boolean}) {
     )
 }
 
-function KeybindRow({action, keys, highlight}: any) {
+function KeybindRow({ action, keys, highlight }: any) {
     return (
         <div className="flex items-center justify-between py-2 border-b border-white/5">
             <span className={highlight ? 'text-purple-300 font-bold' : 'text-gray-300'}>
