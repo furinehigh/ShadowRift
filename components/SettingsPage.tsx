@@ -1,0 +1,148 @@
+'use client'
+
+import { motion } from "framer-motion"
+import { useState } from "react"
+
+
+
+type Tab = 'graphics' | 'audio' | 'controls' | 'gameplay'
+
+export default function SettingsPage({onClose}: {onClose: () => void}) {
+    const [activeTab, setActiveTab] = useState<Tab>('graphics')
+
+    return (
+        <motion.div
+            initial={{opacity: 0, scale: 0.95}}
+            animate={{opacity: 1, scale: 1}}
+            exit={{opacity: 0, scale: 0.95}}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-12 bg-black/80 backdrop-blur-sm"
+        >
+            <div className="w-full max-w-5xl h-[80vh] flex flex-col md:flex-row bg-[#0f0f1a] border border-white/10 shadow-2xl overflow-hidden rounded-xl">
+                <div className="p-6 border-b border-white/5">
+                    <h2 className="text-2xl font-custom text-white tracking-widest text-shadow-glow">
+                        SETTINGS
+                    </h2>
+                </div>
+
+                <div>
+
+                </div>
+            </div>
+        </motion.div>
+    )
+}
+
+function SidebarItem({active, icon, label, onClick}: any) {
+    return (
+        <button 
+            onClick={onClick}
+            className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-mono tracking-wider transition-all duration-200`}
+        >
+            <span className={active ? 'text-purple-400' : ''}>{icon}</span>
+            {label}
+        </button>
+    )
+}
+
+// all settings sections
+
+function GraphicsSettings() {
+    return (
+        <div className="space-y-8 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <SettingRow label='Resolution' description='Window resolution scale'>
+                <select name="resolution" className="bg-black/40 border border-white/20 text-white px-4 py-2 rounded focus:border-purple-500 outline-none w-48">
+                    <option value="">1920 x 1080</option>
+                    <option value="">2560 x 1440</option>
+                    <option value="">1280 x 720</option>
+                </select>
+            </SettingRow>
+
+            <SettingRow lable='Display Mode' description='Fullscreen or Windowed'>
+                <div className="flex bg-black/40 p-1 rounded border border-white/10 w-fit">
+                    <button className="px-4 py-1.5 bg-purple-600 text-white rounded text-xs">
+                        FULLSCREEN
+                    </button>
+                    <button className="px-4 py-1.5 text-gray-400 hover:text-white text-xs">
+                        WINDOWED
+                    </button>
+                </div>
+            </SettingRow>
+
+
+            <div className="h-px bg-white/10 my-4" />
+
+            <SettingRow label='Particle Quality' description='Visual effects density (Rifts)'>
+                <RangeSlider value={80} />
+            </SettingRow>
+
+            <SettingRow label='Background Parallax' description='Enable depth movement'>
+                <ToggleSwitch checked={true} />
+            </SettingRow>
+
+            <SettingRow label='Post Processing' description='Bloom, Chromatic Aberration'>
+                <ToggleSwitch checked={true} />
+            </SettingRow>
+        </div>
+    )
+}
+
+function AudioSettings() {
+    return (
+        <div>
+            <SettingRow>
+                
+            </SettingRow>
+        </div>
+    )
+}
+
+// some helpers
+
+function SettingRow({label, description, children}: any) {
+    return (
+        <div className="flex items-center justify-between group">
+            <div>
+                <div className="text-white group-hover:text-purple-300 transition-colors">
+                    {label}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">{description}</div>
+            </div>
+            <div>{children}</div>
+        </div>
+    )
+}
+
+function RangeSlider({value}: {value: number}){
+    return (
+        <div className="w-48 flex items-center gap-3">
+            <input type="range" defaultValue={value} className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+            <span className="text-xs w-8 text-right text-gray-400">{value}</span>
+        </div>
+    )
+}
+
+function ToggleSwitch({checked} : {checked: boolean}) {
+    return (
+        <div className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${checked ? 'bg-purple-600' : 'bg-gray-700'}`}>
+            <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
+        </div>
+    )
+}
+
+function KeybindRow({action, keys, highlight}: any) {
+    return (
+        <div className="flex items-center justify-between py-2 border-b border-white/5">
+            <span className={highlight ? 'text-purple-300 font-bold' : 'text-gray-300'}>
+                {action}
+            </span>
+
+            <div className="flex gap-2">
+                {keys.map((k: string) => {
+                    <kbd key={k} className="px-3 py-1 bg-white/10 border border-white/10 rounded text-xs font-bold text-gray-300 min-w-[30px] text-center">
+                        {k}
+                    </kbd>
+                })}
+            </div>
+        </div>
+    )
+}
