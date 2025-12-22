@@ -11,30 +11,56 @@ import MobileControls from "../mobile/MobileControls"
 const GRAVITY = 2000
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
+const CLIMB_SPEED = -400
 const RIFT_COOLDOWN = 5000
 const PLAYER_W = 40
 const PLAYER_H = 40
-const ATTACK_RANGE = 80
 
 const COLOR_NORMAL = '#4b4c9d'
 const COLOR_RIFT = '#8a2be2'
 
-const playSound = (type: 'jump' | 'rift' | 'land') => {
+const playSound = (type: 'jump' | 'rift' | 'land' | 'climb') => {
     // const audio = new Audio(`/sfx/${type}.mp3`)
     // audio.volume = 0.5
     // audio.play().catch(() => {})
 }
 
+// SSR safe
+function useWindowSize() {
+    const [size, setSize] = useState({ width: 1200, height: 800 })
+
+    const [isClient, setIsClient] = useState(false)
+
+    useEffect(() => {
+        setIsClient(true)
+        const handleResize = () => {
+            setSize({ width: window.innerWidth, height: window.innerHeight })
+
+        }
+        handleResize()
+
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
+    return { ...size, isClient }
+
+}
+
+interface ExtendedPlayerState extends PlayerState {
+    isClimbing: boolean
+    climbTargetX: number | null
+}
+
 export default function SplitWorld() {
-    const { p1Realm, p2Realm, setP1Realm, setP2Realm } = useRealmStore()
+    const { p1Realm, p2Realm, setP1Realm } = useRealmStore()
+    const { width: windowWidth, height: windowHeight, isClient } = useWindowSize()
     const [tick, setTick] = useState(0)
 
     const generateSkyline = (type: 'normal' | 'rift'): Building[] => {
         const buildings: Building[] = []
         let currentX = 0
         const count = 50
-
-        const baseColor = type === 'normal' ? COLOR_NORMAL : COLOR_RIFT
 
         for (let i = 0; i < count; i++) {
             const isGap = Math.random() > 0.8
@@ -66,28 +92,45 @@ export default function SplitWorld() {
     }
 
     // player refs
-    const p1 = useRef<PlayerState>({
-        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100
+    const p1 = useRef<ExtendedPlayerState>({
+        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetX: null
     })
 
-    const p2 = useRef<PlayerState>({
-        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100
+    const p2 = useRef<ExtendedPlayerState>({
+        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetX: null
     })
 
-    const cameras = useRef({normal: 100, rift: 600})
+    const cameras = useRef({ normal: 100, rift: 600 })
 
     const normalBuildings = useRef<Building[]>(generateSkyline('normal'))
     const riftBuildings = useRef<Building[]>(generateSkyline('rift'))
 
     const inputs = useRef({ left: false, right: false, jump: false, attack: false })
 
-    const updatePhysics = (p: PlayerState, dt: number, buildings: Building[]) => {
+    const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
 
-        p.x += p.vx * dt
+        // if (p.isClimbing) {
+        //     p.vy = CLIMB_SPEED
+        //     p.y += p.vy * dt
+        //     p.vx = 0
 
-        const screenHeight = window.innerHeight
-        const floorY = screenHeight
+        // } else {
+        //     p.x += p.vx * dt
+        //     p.vy += GRAVITY * dt
+        //     p.y += p.vy * dt
+        // }
+
+
+
+        // p.x += p.vx * dt
+
+        const floorY = windowHeight
+
+        if (!p.isClimbing) {
+            p.x += p.vx * dt
+        }
+        // let horizontalCollision = false
 
         for (const b of buildings) {
             const bTop = floorY - b.height
@@ -96,41 +139,75 @@ export default function SplitWorld() {
                 p.x + p.width > b.x &&
                 p.y + p.height > bTop + 10
             ) {
-                if (p.vx > 0) {
-                    p.x = b.x - p.width
+                const hitLeftSide = (p.x + p.width / 2) < (b.x + b.width / 2)
+                const wallX = hitLeftSide ? b.x : b.x + b.width
+
+                const distHeadToLedge = p.y - bTop
+                const canClimb = !p.isGrounded && !p.isClimbing && (distHeadToLedge > -20 && distHeadToLedge < 50)
+
+                if (canClimb) {
+                    p.isClimbing = true
+                    playSound('climb')
+
+                    p.x = hitLeftSide ? wallX - p.width : wallX
                     p.vx = 0
-                } else if (p.vx < 0) {
-                    p.x = b.x + b.width
-                    p.vx =0 
                 }
+
+                if (!p.isClimbing) {
+                    if (p.vx > 0) {
+                        p.x = b.x - p.width
+                        p.vx = 0
+                    } else if (p.vx < 0) {
+                        p.x = b.x + b.width
+                        p.vx = 0
+                    }
+                }
+
             }
         }
 
+        if (p.isClimbing) {
+            p.vy = CLIMB_SPEED
+            p.y += p.vy * dt
 
-        p.vy += GRAVITY * dt
-        p.y += p.vy * dt
+        } else {
+            p.vy += GRAVITY * dt
+            p.y += p.vy * dt
+        }
 
-
+        // landing on bulding ground
         p.isGrounded = false
 
-        for (let i = 0; i < buildings.length; i++) {
-            const b = buildings[i]
+        for (const b of buildings) {
 
             const bTop = floorY - b.height
 
-            if (p.x + p.width > b.x && p.x < b.x + b.width) {
-                if (p.y + p.height >= bTop && (p.y + p.height - (p.vy * dt)) <= bTop + 20) {
-                    if (p.vy >= 0) {
+            if (p.x + p.width > b.x + 2 && p.x < b.x + b.width - 2) {
+
+                if (p.isClimbing) {
+                    if (p.y + p.height <= bTop + 10) {
+                        p.isClimbing = false
+                        p.isGrounded = true
+                        p.y = bTop - p.height
+                        p.vy = 0
+
+                        if (p.facingRight) p.x += 10
+                        else p.x -= 10
+                    }
+                } else {
+                    if (p.y + p.height >= bTop && p.y + p.height < bTop + 40 && p.vy >= 0) {
                         p.y = bTop - p.height
                         p.vy = 0
                         p.isGrounded = true
                     }
                 }
+
             }
         }
 
-        if (p.y > screenHeight + 200) {
+        if (p.y > floorY + 200) {
             p.isDead = true
+            p.isClimbing = false
 
             setTimeout(() => {
                 p.x = 100
@@ -144,32 +221,44 @@ export default function SplitWorld() {
 
     useGameLoop((dt) => {
 
+        if (!isClient) return
+
         p1.current.vx = 0
 
-        if (inputs.current.left) {
-            p1.current.vx = -MOVE_SPEED
-            p1.current.facingRight = false
+        if (!p1.current.isClimbing) {
+
+            if (inputs.current.left) {
+                p1.current.vx = -MOVE_SPEED
+                p1.current.facingRight = false
+            }
+
+            if (inputs.current.right) {
+                p1.current.vx = MOVE_SPEED
+                p1.current.facingRight = true
+            }
+
+            if (inputs.current.jump && p1.current.isGrounded) {
+                p1.current.vy = JUMP_FORCE
+                // p1.current.isGrounded = false
+                playSound('jump')
+
+                inputs.current.jump = false
+            }
+        } else {
+            if (inputs.current.jump) {
+                p1.current.isClimbing = false
+                p1.current.vy = JUMP_FORCE
+                inputs.current.jump = false
+            }
         }
 
-        if (inputs.current.right) {
-            p1.current.vx = MOVE_SPEED
-            p1.current.facingRight = true
-        }
-
-        if (inputs.current.jump && p1.current.isGrounded) {
-            p1.current.vy = JUMP_FORCE
-            // p1.current.isGrounded = false
-            playSound('jump')
-
-            inputs.current.jump = false
-        }
 
         if (inputs.current.attack) {
             const targetArray = p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current
 
             const attackX = p1.current.facingRight ? p1.current.x + PLAYER_W + 20 : p1.current.x - 20
 
-            const hit = targetArray.find(b => attackX > b.x && attackX < b.x + b.width && Math.abs((window.innerHeight - b.height) - p1.current.y) < 100)
+            const hit = targetArray.find(b => attackX > b.x && attackX < b.x + b.width && Math.abs((windowHeight - b.height) - p1.current.y) < 100)
 
             if (hit) {
                 hit.x += (Math.random() * 10) - 5
@@ -181,7 +270,7 @@ export default function SplitWorld() {
         updatePhysics(p1.current, dt, p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current)
         updatePhysics(p2.current, dt, p2.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current)
 
-        if (p1.current.realm === 'normal'){
+        if (p1.current.realm === 'normal') {
             cameras.current.normal = p1.current.x
         }
         if (p1.current.realm === 'rift') {
@@ -233,11 +322,14 @@ export default function SplitWorld() {
 
         const newRealm = p1.current.realm === 'normal' ? 'rift' : 'normal'
         p1.current.realm = newRealm
+        p1.current.isClimbing = false
         setP1Realm(newRealm)
     }
 
 
     const isSplit = p1Realm !== p2Realm
+
+    if (!isClient) return <div className="w-full h-full bg-black"></div>
 
     return (
         <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-white">
@@ -249,11 +341,13 @@ export default function SplitWorld() {
                 <GameView
                     cameraX={cameras.current.normal}
                     player={p1Realm === 'normal' ? p1.current : p2.current}
-                    otherPlayer={p1Realm === 'normal' ? p2.current: p2.current}
+                    otherPlayer={p1Realm === 'normal' ? p2.current : p2.current}
                     buildings={normalBuildings.current}
                     isRift={false}
                     active={true}
                     screenWidthDivider={isSplit ? 2 : 1}
+                    windowWidth={windowWidth}
+                    currentRealm='normal'
                 />
             </div>
 
@@ -273,6 +367,8 @@ export default function SplitWorld() {
                     isRift={true}
                     active={true}
                     screenWidthDivider={isSplit ? 2 : 1}
+                    windowWidth={windowWidth}
+                    currentRealm='rift'
                 />
             </div>
 
@@ -292,18 +388,18 @@ export default function SplitWorld() {
     )
 }
 
-function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider }: any) {
+function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider, windowWidth, currentRealm }: any) {
     if (!active) return null
 
 
-    const offsetX = cameraX - (window.innerWidth / screenWidthDivider) / 2
+    const offsetX = cameraX - (windowWidth / screenWidthDivider) / 2
 
     return (
         <div className="absolute inset-0 pointer-events-none">
 
             {buildings.map((b: Building) => {
                 const left = b.x - offsetX
-                if (left < -500 || left > window.innerWidth) return null
+                if (left < -500 || left > windowWidth) return null
 
                 return (
                     <div key={b.id} className="absolute bottom-0 flex flex-col justify-end" style={{
@@ -327,7 +423,7 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, scr
                 )
             })}
 
-            {player.realm === (isRift ? 'rift' : 'normal') && <div style={{
+            {player.realm === currentRealm && <div style={{
                 position: 'absolute',
                 left: player.x - offsetX,
                 top: player.y,
@@ -335,16 +431,21 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, scr
                 height: player.height,
                 backgroundColor: isRift ? '#fff' : '#4b4c9d',
                 boxShadow: isRift ? '0 0 15px white' : 'none',
-                transform: player.isDead ? 'scale(0)' : 'none',
+                transform: player.isDead ? 'scale(0)' : (player.isClimbing ? 'scaleX(0.9)' : 'none'),
                 transition: 'transform 0.1s'
             }}>
-                    <div className="absolute top-2 right-2 w-2 h-2 bg-white" style={{
-                        right: player.facingRight ? 4 : 'auto',
-                        left: player.facingRight ? 'auto' : 4
-                    }} />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-white" style={{
+                    right: player.facingRight ? 4 : 'auto',
+                    left: player.facingRight ? 'auto' : 4
+                }} />
+                {player.isClimbing && (
+                    <div className="absolute -top-4 w-full text-center text-[10px] text-white font-bold animate-pulse">
+                        CLIMB!
+                    </div>
+                )}
             </div>}
 
-            {otherPlayer.realm === (isRift ? 'rift' : 'normal') &&<div style={{
+            {otherPlayer.realm === currentRealm && <div style={{
                 position: 'absolute',
                 left: otherPlayer.x - offsetX,
                 top: otherPlayer.y,
