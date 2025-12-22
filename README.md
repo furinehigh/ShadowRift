@@ -1,4 +1,4 @@
-# Shadow Raft
+# Shadow Rift
 A 2D fighting game which uses dual realm concept and shadow fighting, and with multiplayer compatibility and easy controls.
 
 # Why build this?
