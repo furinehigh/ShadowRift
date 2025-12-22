@@ -23,4 +23,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+}
+
+@font-face {
+  font-family: 'Fighting-Spirit';
+  src: url('/fonts/Fighting-Spirit.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-custom {
+  font-family: 'Fighting-Spirit', 'Courier New', monospace;
+
+}
+
+.text-shadow-glow {
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.text-shadow-sm {
+  text-shadow: 2px 2px 0px rgba(0,0,0,0.8);
 }
