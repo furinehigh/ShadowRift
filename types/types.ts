@@ -1,3 +1,5 @@
+export type GameState = 'loading' | 'menu' | 'playing'
+
 export type RealmConfig = {
     id: 'shadow' | 'rift'
     direction: 1 | -1

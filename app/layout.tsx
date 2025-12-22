@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shadow Rift",
+  title: "Shadow Rift: Dual Realm Combat",
   description: "A 2D, dual realm, and shadow fighting game with multiplayer and e-sports compatibility.",
 };
 
