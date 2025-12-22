@@ -11,8 +11,8 @@ import MobileControls from "../mobile/MobileControls"
 const GRAVITY = 2000
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
-const CLIMB_SPEED = -400
-const WALL_SLIDE_SPEED = 150
+const CLIMB_SPEED = -250
+const WALL_SLIDE_SPEED = 50
 const RIFT_COOLDOWN = 5000
 const PLAYER_W = 40
 const PLAYER_H = 40
@@ -50,7 +50,8 @@ function useWindowSize() {
 
 interface ExtendedPlayerState extends PlayerState {
     isClimbing: boolean
-    climbTargetX: number | null
+    climbTargetY: number | null
+    climbLockX: number | null
 }
 
 export default function SplitWorld() {
@@ -94,11 +95,11 @@ export default function SplitWorld() {
 
     // player refs
     const p1 = useRef<ExtendedPlayerState>({
-        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetX: null
+        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null
     })
 
     const p2 = useRef<ExtendedPlayerState>({
-        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetX: null
+        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null
     })
 
     const cameras = useRef({ normal: 100, rift: 600 })
@@ -110,6 +111,28 @@ export default function SplitWorld() {
 
     const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
+
+        if (p.isClimbing) {
+            const climbSpeed = 6
+            
+            if (p.climbTargetY !== null) {
+                p.y += (p.climbTargetY - p.y) * climbSpeed * dt
+            } 
+
+            if (Math.abs(p.y - p.climbTargetY!) < 2) {
+                p.y = p.climbTargetY!
+
+                p.isClimbing = false
+                p.isGrounded = true
+
+                p.vy = 0
+                p.climbTargetY = null
+
+                p.climbLockX = null
+            }
+
+            return
+        }
 
         const floorY = windowHeight
 
@@ -124,30 +147,41 @@ export default function SplitWorld() {
 
             if (p.x < b.x + b.width &&
                 p.x + p.width > b.x &&
-                p.y + p.height > bTop + 10
+                p.y + p.height > bTop + 5
             ) {
+                const headNearLedge = p.y + 10 >= bTop - 20 && p.y + 10 <= bTop + 20
+                const movingUpward = p.vy > -200 && p.vy < 400
                 const hitLeftSide = (p.x + p.width / 2) < (b.x + b.width / 2)
-                const wallX = hitLeftSide ? b.x : b.x + b.width
 
-                const distHeadToLedge = p.y - bTop
-                const canClimb = !p.isGrounded && !p.isClimbing && (distHeadToLedge > -10 && distHeadToLedge <= PLAYER_H)
-
-                if (canClimb) {
+                if (
+                    headNearLedge &&
+                    movingUpward &&
+                    !p.isGrounded &&
+                    !p.isClimbing
+                ) {
                     p.isClimbing = true
-                    playSound('climb')
-
-                    p.x = hitLeftSide ? wallX - p.width : wallX
                     p.vx = 0
+                    p.vy = 0
+
+                    p.climbTargetY = bTop -  p.height
+                    p.climbLockX = hitLeftSide ? b.x - p.width : b.x + b.width
+
+                    p.x = p.climbLockX
+
+                    playSound('climb')
                 }
 
                 if (!p.isClimbing) {
-                    isTouchingWall = true
-                    if (p.vx > 0) {
-                        p.x = b.x - p.width
-                        p.vx = 0
-                    } else if (p.vx < 0) {
-                        p.x = b.x + b.width
-                        p.vx = 0
+                    if (p.y + p.height > bTop + 10) {
+
+                        isTouchingWall = true
+                        if (p.vx > 0) {
+                            p.x = b.x - p.width
+                            p.vx = 0
+                        } else if (p.vx < 0) {
+                            p.x = b.x + b.width
+                            p.vx = 0
+                        }
                     }
                 }
 
