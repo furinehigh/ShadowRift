@@ -12,6 +12,7 @@ const GRAVITY = 2000
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
 const CLIMB_SPEED = -400
+const WALL_SLIDE_SPEED = 150
 const RIFT_COOLDOWN = 5000
 const PLAYER_W = 40
 const PLAYER_H = 40
@@ -110,27 +111,13 @@ export default function SplitWorld() {
     const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
 
-        // if (p.isClimbing) {
-        //     p.vy = CLIMB_SPEED
-        //     p.y += p.vy * dt
-        //     p.vx = 0
-
-        // } else {
-        //     p.x += p.vx * dt
-        //     p.vy += GRAVITY * dt
-        //     p.y += p.vy * dt
-        // }
-
-
-
-        // p.x += p.vx * dt
-
         const floorY = windowHeight
 
         if (!p.isClimbing) {
             p.x += p.vx * dt
         }
-        // let horizontalCollision = false
+
+        let isTouchingWall = false
 
         for (const b of buildings) {
             const bTop = floorY - b.height
@@ -143,7 +130,7 @@ export default function SplitWorld() {
                 const wallX = hitLeftSide ? b.x : b.x + b.width
 
                 const distHeadToLedge = p.y - bTop
-                const canClimb = !p.isGrounded && !p.isClimbing && (distHeadToLedge > -20 && distHeadToLedge < 50)
+                const canClimb = !p.isGrounded && !p.isClimbing && (distHeadToLedge > -10 && distHeadToLedge <= PLAYER_H)
 
                 if (canClimb) {
                     p.isClimbing = true
@@ -154,6 +141,7 @@ export default function SplitWorld() {
                 }
 
                 if (!p.isClimbing) {
+                    isTouchingWall = true
                     if (p.vx > 0) {
                         p.x = b.x - p.width
                         p.vx = 0
@@ -172,6 +160,12 @@ export default function SplitWorld() {
 
         } else {
             p.vy += GRAVITY * dt
+
+            if (isTouchingWall && p.vy > 0) {
+                if (p.vy > WALL_SLIDE_SPEED) {
+                    p.vy = WALL_SLIDE_SPEED
+                }
+            }
             p.y += p.vy * dt
         }
 
