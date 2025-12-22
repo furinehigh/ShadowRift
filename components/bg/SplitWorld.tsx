@@ -11,14 +11,12 @@ import MobileControls from "../mobile/MobileControls"
 const GRAVITY = 2000
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
-const CLIMB_SPEED = -250
+const CLIMB_SPEED = 6
 const WALL_SLIDE_SPEED = 50
 const RIFT_COOLDOWN = 5000
 const PLAYER_W = 40
 const PLAYER_H = 40
 
-const COLOR_NORMAL = '#4b4c9d'
-const COLOR_RIFT = '#8a2be2'
 
 const playSound = (type: 'jump' | 'rift' | 'land' | 'climb') => {
     // const audio = new Audio(`/sfx/${type}.mp3`)
@@ -57,7 +55,7 @@ interface ExtendedPlayerState extends PlayerState {
 export default function SplitWorld() {
     const { p1Realm, p2Realm, setP1Realm } = useRealmStore()
     const { width: windowWidth, height: windowHeight, isClient } = useWindowSize()
-    const [tick, setTick] = useState(0)
+    const [, setTick] = useState(0)
 
     const generateSkyline = (type: 'normal' | 'rift'): Building[] => {
         const buildings: Building[] = []
@@ -112,12 +110,9 @@ export default function SplitWorld() {
     const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
 
-        if (p.isClimbing) {
-            const climbSpeed = 6
-            
-            if (p.climbTargetY !== null) {
-                p.y += (p.climbTargetY - p.y) * climbSpeed * dt
-            } 
+        if (p.isClimbing && p.climbTargetY !== null) {
+
+            p.y += (p.climbTargetY - p.y) * CLIMB_SPEED * dt
 
             if (Math.abs(p.y - p.climbTargetY!) < 2) {
                 p.y = p.climbTargetY!
@@ -136,71 +131,52 @@ export default function SplitWorld() {
 
         const floorY = windowHeight
 
-        if (!p.isClimbing) {
-            p.x += p.vx * dt
-        }
+        p.x += p.vx * dt
+        p.vy += GRAVITY * dt
+        p.y += p.vy * dt
 
-        let isTouchingWall = false
+        let touchingWall = false
 
         for (const b of buildings) {
             const bTop = floorY - b.height
 
-            if (p.x < b.x + b.width &&
-                p.x + p.width > b.x &&
-                p.y + p.height > bTop + 5
+            const overlap = p.x < b.x + b.width && p.x + p.width > b.x && p.y + p.height > bTop
+
+            if (!overlap) continue
+
+            const headNearLedge = p.y + 10 >= bTop - 20 && p.y + 10 <= bTop + 20
+            const hitLeftSide = (p.x + p.width / 2) < (b.x + b.width / 2)
+            const wallX = hitLeftSide ? b.x - p.width : b.x + b.width
+
+            if (
+                headNearLedge &&
+                !p.isGrounded &&
+                !p.isClimbing
             ) {
-                const headNearLedge = p.y + 10 >= bTop - 20 && p.y + 10 <= bTop + 20
-                const movingUpward = p.vy > -200 && p.vy < 400
-                const hitLeftSide = (p.x + p.width / 2) < (b.x + b.width / 2)
+                p.isClimbing = true
+                p.vx = 0
+                p.vy = 0
 
-                if (
-                    headNearLedge &&
-                    movingUpward &&
-                    !p.isGrounded &&
-                    !p.isClimbing
-                ) {
-                    p.isClimbing = true
-                    p.vx = 0
-                    p.vy = 0
+                p.climbTargetY = bTop - p.height
+                p.climbLockX = wallX
 
-                    p.climbTargetY = bTop -  p.height
-                    p.climbLockX = hitLeftSide ? b.x - p.width : b.x + b.width
+                p.x = wallX
 
-                    p.x = p.climbLockX
-
-                    playSound('climb')
-                }
-
-                if (!p.isClimbing) {
-                    if (p.y + p.height > bTop + 10) {
-
-                        isTouchingWall = true
-                        if (p.vx > 0) {
-                            p.x = b.x - p.width
-                            p.vx = 0
-                        } else if (p.vx < 0) {
-                            p.x = b.x + b.width
-                            p.vx = 0
-                        }
-                    }
-                }
-
+                playSound('climb')
+                return
             }
+
+            if (p.y + p.height > bTop + 10) {
+
+                touchingWall = true
+                p.vx = 0
+                p.x = wallX
+            }
+
         }
 
-        if (p.isClimbing) {
-            p.vy = CLIMB_SPEED
-            p.y += p.vy * dt
-
-        } else {
-            p.vy += GRAVITY * dt
-
-            if (isTouchingWall && p.vy > 0) {
-                if (p.vy > WALL_SLIDE_SPEED) {
-                    p.vy = WALL_SLIDE_SPEED
-                }
-            }
-            p.y += p.vy * dt
+        if (touchingWall && p.vy > WALL_SLIDE_SPEED) {
+            p.vy = WALL_SLIDE_SPEED
         }
 
         // landing on bulding ground
@@ -210,25 +186,16 @@ export default function SplitWorld() {
 
             const bTop = floorY - b.height
 
-            if (p.x + p.width > b.x + 2 && p.x < b.x + b.width - 2) {
+            if (p.x + p.width > b.x + 2 &&
+                p.x < b.x + b.width - 2 &&
+                p.y + p.height >= bTop &&
+                p.y + p.height < bTop + 40 &&
+                p.vy >= 0
+            ) {
 
-                if (p.isClimbing) {
-                    if (p.y + p.height <= bTop + 10) {
-                        p.isClimbing = false
-                        p.isGrounded = true
-                        p.y = bTop - p.height
-                        p.vy = 0
-
-                        if (p.facingRight) p.x += 10
-                        else p.x -= 10
-                    }
-                } else {
-                    if (p.y + p.height >= bTop && p.y + p.height < bTop + 40 && p.vy >= 0) {
-                        p.y = bTop - p.height
-                        p.vy = 0
-                        p.isGrounded = true
-                    }
-                }
+                p.y = bTop - p.height
+                p.vy = 0
+                p.isGrounded = true
 
             }
         }
