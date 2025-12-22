@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from "framer-motion"
+import { Gamepad2, Keyboard, Monitor, Volume2 } from "lucide-react"
 import { useState } from "react"
 
 
@@ -24,9 +25,34 @@ export default function SettingsPage({onClose}: {onClose: () => void}) {
                     </h2>
                 </div>
 
-                <div>
-
+                <div className="flex-1 py-4 space-y-1">
+                    <SidebarItem 
+                        active={activeTab === 'graphics'}
+                        onClick={() => setActiveTab('graphics')}
+                        icon={<Monitor size={18} />}
+                        label='GRAPHICS'
+                    />
+                    <SidebarItem 
+                        active={activeTab === 'audio'}
+                        onClick={() => setActiveTab('audio')}
+                        icon={<Volume2 size={18} />}
+                        label='AUDIO'
+                    />
+                    <SidebarItem 
+                        active={activeTab === 'controls'}
+                        onClick={() => setActiveTab('controls')}
+                        icon={<Keyboard size={18} />}
+                        label='CONTROLS'
+                    />
+                    <SidebarItem 
+                        active={activeTab === 'gameplay'}
+                        onClick={() => setActiveTab('gameplay')}
+                        icon={<Gamepad2 size={18} />}
+                        label='GAMEPLAY'
+                    />
                 </div>
+
+                
             </div>
         </motion.div>
     )
@@ -132,7 +158,19 @@ function ControlsSettings() {
 
 
 function GamePlaySettings() {
-    return ()
+    return (
+        <div className="space-y-8 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <SettingRow label='Show FPS' description='Display frame counter'>
+                <ToggleSwitch checked={true} />
+            </SettingRow>
+            <SettingRow label='Screen Shake' description={'Camera impact on hits'}>
+                <RangeSlider value={50} />
+            </SettingRow>
+            <SettingRow label='Damage Number' description='Show floating damage text'>
+                <ToggleSwitch checked={true} />
+            </SettingRow>
+        </div>
+    )
 }
 
 // some helpers
