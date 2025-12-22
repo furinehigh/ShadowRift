@@ -88,12 +88,51 @@ function GraphicsSettings() {
 
 function AudioSettings() {
     return (
-        <div>
-            <SettingRow>
-                
+        <div className="space-y-8 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <SettingRow label='Master Volume' description='Global sound level'>
+                <RangeSlider value={75} />
+            </SettingRow>
+            <SettingRow label='Music Volume' description='Background ambiance & tracks'>
+                <RangeSlider value={60} />
+            </SettingRow>
+            <SettingRow label='SFX Volume' description='Jumps, rifts, and attacks'>
+                <RangeSlider value={90} />
+            </SettingRow>
+
+            <div className="h-px bg-white/10 my-4" />
+
+            <SettingRow label='Mute in Background' description='Silence audio when tabbed out'>
+                <ToggleSwitch checked={false} />
             </SettingRow>
         </div>
     )
+}
+
+
+function ControlsSettings() {
+    return (
+        <div className="space-y-6 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">Movement</div>
+            <KeybindRow action='Move Left' keys={['A', '←']} />
+            <KeybindRow action='Move Right' keys={['D', '→']} />
+            <KeybindRow action='Move Left' keys={['SPACE', 'W', '↑']} />
+
+            <div className="h-px bg-white/10 my-6" />
+
+            <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">
+                Combat & Abilities
+            </div>
+
+            <KeybindRow action='Attack' keys={['Z', 'K']} />
+            <KeybindRow action='Realm Switch (Rift)' keys={['R']} highlight />
+        </div>
+    )
+}
+
+
+
+function GamePlaySettings() {
+    return ()
 }
 
 // some helpers
