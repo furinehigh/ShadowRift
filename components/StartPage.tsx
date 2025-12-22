@@ -8,11 +8,13 @@ import LoadingScreen from './LoadingScreen'
 import RealmScene from './bg/RealmScene'
 import { realms } from '@/lib/realms'
 import { Play, Settings, ShoppingBag } from 'lucide-react'
+import SettingsPage from './SettingsPage'
 
 
 function StartPage() {
   const [gameState, setGameState] = useState<GameState>('loading')
   const [menuScroll, setMenuScroll] = useState(0)
+  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
     if (gameState !== 'menu') return
@@ -64,8 +66,8 @@ function StartPage() {
       {gameState === 'menu' && (
         <div className='relative z-20 w-full h-full flex flex-col items-center justify-between py-12'>
           <div className='w-full flex justify-between px-8'>
-            <MenuButton icon={<Settings size={40} />} label='SETTINGS' delay={0.2} />
-            <MenuButton icon={<ShoppingBag size={40} />} label='SHOP' delay={0.3} />
+            <MenuButton icon={<Settings size={40} />} label='SETTINGS' delay={0.2} onClick={() => setShowSettings(true)} />
+            <MenuButton icon={<ShoppingBag size={40} />} label='SHOP' delay={0.3} onClick={() => {}} />
           </div>
 
           <div className='flex-1 flex flex-col items-center justify-center relative'>
@@ -111,6 +113,12 @@ function StartPage() {
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {showSettings && (
+          <SettingsPage onClose={() => setShowSettings(false)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -118,7 +126,7 @@ function StartPage() {
 export default StartPage
 
 
-function MenuButton({ icon, label, delay }: { icon: React.ReactNode, label: string, delay: number }) {
+function MenuButton({ icon, label, delay, onClick }: { icon: React.ReactNode, label: string, delay: number, onClick: () => void }) {
   return (
     <motion.button
       initial={{ y: -60, opacity: 0 }}
@@ -127,6 +135,7 @@ function MenuButton({ icon, label, delay }: { icon: React.ReactNode, label: stri
       whileHover='hover'
       whileTap='tap'
       className='relative group'
+      onClick={onClick}
     >
       <div className='absolute inset-0 rounded-xl bg-purple-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
 
