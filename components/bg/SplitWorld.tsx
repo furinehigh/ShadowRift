@@ -144,12 +144,17 @@ export default function SplitWorld() {
 
             if (!overlap) continue
 
-            const headNearLedge = p.y + 10 >= bTop - 20 && p.y + 10 <= bTop + 20
-            const hitLeftSide = (p.x + p.width / 2) < (b.x + b.width / 2)
-            const wallX = hitLeftSide ? b.x - p.width : b.x + b.width
+            const headNearLedge = p.y + p.height >= bTop - 10 && p.y + p.height <= bTop + 20
+            const nearLeftEdge = Math.abs((p.x + p.width) - b.x) < 12
+            const nearRightEdge = Math.abs(p.x - (b.x + b.width)) < 12
+
+            const isAtEdge = nearLeftEdge || nearRightEdge
+
+            const wallX = nearLeftEdge ? b.x - p.width : b.x + b.width
 
             if (
                 headNearLedge &&
+                isAtEdge &&
                 !p.isGrounded &&
                 !p.isClimbing
             ) {
@@ -202,14 +207,18 @@ export default function SplitWorld() {
 
         if (p.y > floorY + 200) {
             p.isDead = true
-            p.isClimbing = false
+            const spawnX = 100
+            const spawnY = floorY - 300
 
             setTimeout(() => {
-                p.x = 100
-                p.y = 0
+                p.x = spawnX
+                p.y = spawnY
                 p.vy = 0
+                p.vx = 0
                 p.isDead = false
-            }, 1000)
+                p.isClimbing = false
+                playSound('rift')
+            }, 300)
         }
     }
 
@@ -426,8 +435,8 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, scr
                 height: player.height,
                 backgroundColor: isRift ? '#fff' : '#4b4c9d',
                 boxShadow: isRift ? '0 0 15px white' : 'none',
-                transform: player.isDead ? 'scale(0)' : (player.isClimbing ? 'scaleX(0.9)' : 'none'),
-                transition: 'transform 0.1s'
+                transform: player.isDead ? 'scale(0) rotate(180deg)' : (player.isClimbing ? 'scaleX(0.9)' : 'none'),
+                transition: 'transform 0.25s ease-out'
             }}>
                 <div className="absolute top-2 right-2 w-2 h-2 bg-white" style={{
                     right: player.facingRight ? 4 : 'auto',
