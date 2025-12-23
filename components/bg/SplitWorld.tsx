@@ -107,10 +107,10 @@ export default function SplitWorld() {
 
     const inputs = useRef({ left: false, right: false, jump: false, attack: false })
 
-    
+
     const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
-        
+
         if (p.isClimbing && p.climbTargetY !== null) {
             console.log('player is climbing', p.isClimbing)
 
@@ -209,12 +209,13 @@ export default function SplitWorld() {
 
         if (p.y > floorY + 200) {
             p.isDead = true
-            const spawnX = 100
-            const spawnY = floorY - 300
 
+            
             setTimeout(() => {
-                p.x = spawnX
-                p.y = spawnY
+                const spawn = getSafeSpawn(buildings, floorY)
+
+                p.x = spawn.x
+                p.y = spawn.y
                 p.vy = 0
                 p.vx = 0
                 p.isDead = false
@@ -222,6 +223,15 @@ export default function SplitWorld() {
                 playSound('rift')
             }, 300)
         }
+    }
+
+    const getSafeSpawn = (buildings: Building[], floorY: number) => {
+        const safe = buildings.filter(b => b.width > PLAYER_W + 20).map(b => ({
+            x: b.x + b.width / 2 - PLAYER_W / 2,
+            y: floorY - b.height - PLAYER_H
+        }))
+
+        return safe[Math.floor(Math.random() * safe.length)]
     }
 
 
@@ -267,7 +277,7 @@ export default function SplitWorld() {
             const hit = targetArray.find(b => attackX > b.x && attackX < b.x + b.width && Math.abs((windowHeight - b.height) - p1.current.y) < 100)
 
             if (hit) {
-                hit.x += (Math.random() * 10) - 5
+                hit.shakeUntil = Date.now() + 120
             }
 
             inputs.current.attack = false
@@ -404,7 +414,8 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, scr
         <div className="absolute inset-0 pointer-events-none">
 
             {buildings.map((b: Building) => {
-                const left = b.x - offsetX
+                const shake = b.shakeUntil && b.shakeUntil > Date.now() ? Math.sin(Date.now() / 40) * 4 : 0
+                const left = b.x - offsetX + shake
                 if (left < -500 || left > windowWidth) return null
 
                 return (

@@ -1,7 +1,7 @@
 export type GameState = 'initializing' | 'auth' | 'loading' | 'menu' | 'playing'
 
 export type RealmConfig = {
-    id: 'shadow' | 'rift'
+    id: 'normal' | 'rift'
     direction: 1 | -1
     baseSpeed: number
     tint: string
@@ -41,6 +41,7 @@ export type Building = {
     height: number
     type: 'normal' | 'rift'
     color: string
+    shakeUntil?: number
 }
 
 export type Platform = {

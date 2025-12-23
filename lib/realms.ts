@@ -2,7 +2,7 @@ import { RealmConfig } from "@/types/types";
 
 export const realms: RealmConfig[] = [
     {
-        id: 'shadow',
+        id: 'normal',
         direction: -1,
         baseSpeed: 180,
         tint: 'rgba(30,30,40,0.25)',
