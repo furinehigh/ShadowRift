@@ -15,7 +15,7 @@ import AuthPage from './AuthPage'
 
 
 function StartPage() {
-  const [gameState, setGameState] = useState<GameState>('loading')
+  const [gameState, setGameState] = useState<GameState>('initializing')
   const [menuScroll, setMenuScroll] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
   const [showShop, setShowShop] = useState(false)
