@@ -108,7 +108,7 @@ function SidebarItem({ active, icon, label, onClick }: any) {
 
 function GraphicsSettings() {
     return (
-        <div className="space-y-8 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-8 font-mono max-w-2xl animate-slide-up duration-500">
             <SettingRow label='Resolution' description='Window resolution scale'>
                 <select name="resolution" className="bg-black/40 border border-white/20 text-white px-4 py-2 rounded focus:border-purple-500 outline-none w-48">
                     <option value="">1920 x 1080</option>
@@ -148,7 +148,7 @@ function GraphicsSettings() {
 
 function AudioSettings() {
     return (
-        <div className="space-y-8 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-8 font-mono max-w-2xl animate-slide-up duration-500">
             <SettingRow label='Master Volume' description='Global sound level'>
                 <RangeSlider value={75} />
             </SettingRow>
@@ -171,7 +171,7 @@ function AudioSettings() {
 
 function ControlsSettings() {
     return (
-        <div className="space-y-6 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 font-mono max-w-2xl animate-slide-up duration-500">
             <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">Movement</div>
             <KeybindRow action='Move Left' keys={['A', '←']} />
             <KeybindRow action='Move Right' keys={['D', '→']} />
@@ -193,7 +193,7 @@ function ControlsSettings() {
 
 function GamePlaySettings() {
     return (
-        <div className="space-y-8 font-mono max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-8 font-mono max-w-2xl animate-slide-up duration-500">
             <SettingRow label='Show FPS' description='Display frame counter'>
                 <ToggleSwitch checked={true} />
             </SettingRow>
@@ -248,11 +248,12 @@ function KeybindRow({ action, keys, highlight }: any) {
             </span>
 
             <div className="flex gap-2">
-                {keys.map((k: string) => {
+                {keys.map((k: string) => (
                     <kbd key={k} className="px-3 py-1 bg-white/10 border border-white/10 rounded text-xs font-bold text-gray-300 min-w-[30px] text-center">
                         {k}
                     </kbd>
-                })}
+                )
+                )}
             </div>
         </div>
     )
