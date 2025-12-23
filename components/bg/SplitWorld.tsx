@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Building, Platform, PlayerState } from "@/types/types"
 import { useGameLoop } from "@/hooks/useGameLoop"
 import MobileControls from "../mobile/MobileControls"
+import { Skull, UserIcon, Zap } from "lucide-react"
 
 const GRAVITY = 2000
 const JUMP_FORCE = -850
@@ -56,6 +57,14 @@ export default function SplitWorld() {
     const { p1Realm, p2Realm, setP1Realm } = useRealmStore()
     const { width: windowWidth, height: windowHeight, isClient } = useWindowSize()
     const [, setTick] = useState(0)
+    const [username, setUsername] = useState('Unknown')
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('shadow_rift_user')
+            if (saved) setUsername(saved)
+        }
+    })
 
     const generateSkyline = (type: 'normal' | 'rift'): Building[] => {
         const buildings: Building[] = []
@@ -348,7 +357,33 @@ export default function SplitWorld() {
     if (!isClient) return <div className="w-full h-full bg-black"></div>
 
     return (
-        <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-white">
+        <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-[#0f0f1a]">
+
+            <div className="absolute top-0 left-0 w-full p-4 z-10 pointer-events-none flex justify-between items-start">
+                <PlayerHud
+                    player={p1.current}
+                    name={username}
+                    level={1}
+                    color='text-purple-400'
+                    align='left'
+                    isMe={true}
+                />
+
+                <div className="flex flex-col items-center">
+                    <div className="bg-black/50 text-white px-3 py-1 rounded text-xs border border-white/10 font-bold">
+                        VS
+                    </div>
+                </div>
+
+                <PlayerHud 
+                    player={p2.current}
+                    name='Rival_Bot'
+                    level={4}
+                    color='text-red-400'
+                    align='right'
+                />
+            </div>
+
             <div className="relative h-full overflow-hidden transition-all duration-300 border-r border-white/20"
                 style={{ width: isSplit ? '50%' : (p1Realm === 'normal' ? '100%' : '0%') }}
             >
@@ -396,10 +431,64 @@ export default function SplitWorld() {
                 onAttack={() => inputs.current.attack = true}
             />
 
-            <div className="absolute top-4 left-4 text-white font-bold text-shadow pointer-events-none z-50">
-                P1: {p1Realm.toUpperCase()}
+
+        </div>
+    )
+}
+
+// HUD
+function PlayerHud({player, name, level, color, align, isMe}: any) {
+    const isRight = align === 'right'
+
+    const now = Date.now()
+    const elapsed = now - player.lastRiftSwitch
+    const cooldownPct = Math.min(elapsed / RIFT_COOLDOWN, 1) * 100
+    const isReady = cooldownPct >= 100
+
+    const hpPct = player.hp || 100
+
+    return (
+        <div className={`flex items-center gap-3 ${isRight ? 'flex-row-reverse text-right' : 'flex-row text-right'}`}>
+
+            <div className={`relative w-14 h-14 rounded-xl border-2 ${isRight ? 'border-red-500/50' : 'border-purple-500/50'} bg-black/60 overflow-hidden shadow-lg`}>
+                {isMe ? (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-900 to-black flex items-center justify-center">
+                        <UserIcon className="text-purple-300" size={24} />
+                    </div>
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-900 to-black flex items-center justify-center">
+                        <Skull className="text-red-300" size={24} />
+                    </div>
+                )}
+
+                <div className="absolute bottom-0 w-full text-[9px] bg-black/90 text-white text-center font-bold">
+                    LVL {level}
+                </div>
             </div>
 
+            <div className="flex flex-col gap-1 w-48">
+                <div className={`text-sm font-bold tracking-wider ${color} flex items-center gap-2 ${isRight ? 'justify-end' : 'justify-start'}`}>
+                    {name}
+                </div>
+
+                <div className="w-full h-3 bg-black/50 border border-white/10 skew-x-[10deg] relative overflow-hidden">
+                    <div className={`h-full transition-all duration-300 ${isRight ? 'bg-red-500 float-right' : 'bg-green-500 float-left'}`} style={{width: `${hpPct}%`}} />
+                </div>
+
+                <div className="flex items-center gap-2 mt-1">
+                    {!isRight && <Zap size={12} className={isReady ? 'text-cyan-400' : 'text-gray-600'} />}
+
+                    <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-100 ${isReady ? 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]' : 'bg-cyan-900'}`} style={{width: `${cooldownPct}%`}} />
+                    </div>
+
+                    {isRight && <Zap size={12} className={isReady ? 'text-red-400' : 'text-gray-600'} />}
+
+                    <span className={`text-[9px] font-bold ${isReady ? 'text-cyan-300' : 'text-gray-500'}`}>
+                        {isReady ? 'READY' : `${((RIFT_COOLDOWN - elapsed)/1000).toFixed(1)}s`}
+                    </span>
+                </div>
+            </div>
         </div>
     )
 }

@@ -57,9 +57,9 @@ function StartPage() {
       <div className='w-screen h-screen overflow-hidden'>
         <SplitWorld />
 
-        <button className='fixed top-4 right-4 z-60 text-xs text-white/20 hover:text-white' onClick={() => setGameState('menu')}>
+        {/* <button className='fixed top-4 right-4 z-60 text-xs text-white/20 hover:text-white' onClick={() => setGameState('menu')}>
           EXIT
-        </button>
+        </button> */}
       </div>
     )
   }
