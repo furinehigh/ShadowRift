@@ -450,7 +450,7 @@ function PlayerHud({player, name, level, color, align, isMe}: any) {
     return (
         <div className={`flex items-center gap-3 ${isRight ? 'flex-row-reverse text-right' : 'flex-row text-right'}`}>
 
-            <div className={`relative w-14 h-14 rounded-xl border-2 ${isRight ? 'border-red-500/50' : 'border-purple-500/50'} bg-black/60 overflow-hidden shadow-lg`}>
+            <div className={`relative w-18 h-18 rounded-xl border-2 ${isRight ? 'border-red-500/50' : 'border-purple-500/50'} bg-black/60 overflow-hidden shadow-lg`}>
                 {isMe ? (
                     <div className="w-full h-full bg-gradient-to-br from-purple-900 to-black flex items-center justify-center">
                         <UserIcon className="text-purple-300" size={24} />
