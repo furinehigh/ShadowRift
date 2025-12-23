@@ -66,111 +66,132 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
     }
 
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-full max-w-md bg-[#0f0f1a]/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-2xl"
-            >
-                <div className="flex border-b border-white/5">
-                    <button className={`flex-1 py-4 text-xs font-mono font-bold tracking-widest transition-colors ${mode === 'login' ? 'bg-purple-900/20 text-white border-b-2 border-purple-500' : `text-gray-500 hover:text-gray-300`}`}>
-                        NEW IDENTITY
-                    </button>
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+        >
 
-                    <button className={`flex-1 py-4 text-xs font-mono font-bold tracking-widest transition-colors ${mode === 'login' ? 'bg-purple-900/20 text-white border-b-2 border-purple-500' : 'text-gray-500 hover:text-gray-300'}`}>
-                        LINK ACCESS
-                    </button>
-                </div>
+            <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-full max-w-md bg-[#0f0f1a]/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-2xl"
+                >
+                    <div className="flex border-b border-white/5">
+                        <button onClick={() => {
+                            setMode('register');
+                            setError(null)
+                        }} className={`flex-1 py-4 text-xs font-mono font-bold tracking-widest transition-colors ${mode === 'register' ? 'bg-purple-900/20 text-white border-b-2 border-purple-500' : `text-gray-500 hover:text-gray-300`}`}>
+                            NEW IDENTITY
+                        </button>
+
+                        <button onClick={() => {
+                            setMode('login');
+                            setError(null)
+                        }} className={`flex-1 py-4 text-xs font-mono font-bold tracking-widest transition-colors ${mode === 'login' ? 'bg-purple-900/20 text-white border-b-2 border-purple-500' : 'text-gray-500 hover:text-gray-300'}`}>
+                            LINK ACCESS
+                        </button>
+                    </div>
 
 
-                <div className="p-8">
-                    <AnimatePresence mode="wait">
-                        {mode === 'register' ? (
-                            <motion.form
-                                key='register'
-                                initial={{ x: -20, opacity: 0 }}
-                                animate={{ x: 0, opacity: 1 }}
-                                exit={{ x: 20, opacity: 0 }}
-                                onSubmit={handleRegister}
-                                className="space-y-6"
-                            >
-                                <div className="space-y-2">
-                                    <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">CODENAME</label>
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1 group">
+                    <div className="p-8">
+                        <AnimatePresence mode="wait">
+                            {mode === 'register' ? (
+                                <motion.form
+                                    key='register'
+                                    initial={{ x: -20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: 20, opacity: 0 }}
+                                    onSubmit={handleRegister}
+                                    className="space-y-6"
+                                >
+                                    <div className="space-y-2">
+                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">CODENAME</label>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1 group">
+                                                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                                                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter alias..." className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" maxLength={15} />
+
+                                            </div>
+                                            <button type="button" onClick={handleRandomize} className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 hover:text-purple-400 text-gray-400 transition-colors" title="Randomize">
+                                                <Dice5 size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">DATE OF BIRTH</label>
+                                        <div className="relative group">
+                                            <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+
+                                            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
+                                        </div>
+                                        <p className="text-[10px] text-gray-600 font-mono text-right">RESTRICTED: 12+</p>
+                                    </div>
+
+                                    <SubmitButton loading={loading} label="INITIALIZE LINK" />
+                                </motion.form>
+                            ) : (
+                                <motion.form
+                                    key='login'                                
+                                    initial={{x: 20, opacity: 0}}
+                                    animate={{x: 0, opacity: 1}}
+                                    exit={{x: -20, opacity: 0}}
+                                    onSubmit={handleLogin}
+                                    className="space-y-6"
+                                >
+                                    <div className="space-y-2">
+                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">USERNAME / EMAIL</label>
+
+                                        <div className="relative group">
                                             <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
-                                            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter alias..." className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" maxLength={15} />
+
+                                            <input type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">PASSPHRASE</label>
+
+                                        <div className="relative group">
+                                            <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+
+                                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
 
                                         </div>
-                                        <button type="button" onClick={handleRandomize} className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 hover:text-purple-400 text-gray-400 transition-colors" title="Randomize">
-                                            <Dice5 size={20} />
-                                        </button>
                                     </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">DATE OF BIRTH</label>
-                                    <div className="relative group">
-                                        <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
+                                    <SubmitButton loading={loading} label='RESTORE SESSION' icon={<LogIn size={18} />} />
+                                </motion.form>
+                            )}
+                        </AnimatePresence>
 
-                                        <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
-                                    </div>
-                                    <p className="text-[10px] text-gray-600 font-mono text-right">RESTRICTED: 12+</p>
-                                </div>
-
-                                <SubmitButton loading={loading} label="INITIALIZE LINK" />
-                            </motion.form>
-                        ) : (
-                            <motion.form>
-                                <div className="space-y-2">
-                                    <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">USERNAME / EMAIL</label>
-
-                                    <div className="relative group">
-                                        <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
-
-                                        <input type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">PASSPHRASE</label>
-
-                                    <div className="relative group">
-                                        <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
-
-                                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full " />
-
-                                    </div>
-                                </div>
-
-                                <SubmitButton loading={loading} label='RESTORE SESSION' icon={<LogIn size={18} />} />
-                            </motion.form>
-                        )}
-                    </AnimatePresence>
-
-                    <AnimatePresence>
-                        {error && (
-                            <motion.div 
-                                initial={{height: 0, opacity: 0}}
-                                animate={{height: 'auto', opacity: 1}}
-                                exit={{height: 0, opacity: 0}}
-                                className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded flex items items-center gap-2 text-red-400 text-xs font-mono overflow-hidden"
+                        <AnimatePresence>
+                            {error && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded flex items items-center gap-2 text-red-400 text-xs font-mono overflow-hidden"
                                 >
-                                <ShieldAlert size={14} className="shrink-0" />
-                                {error}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </motion.div>
+                                    <ShieldAlert size={14} className="shrink-0" />
+                                    {error}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.div>
 
-        </div>
+            </div>
+        </motion.div>
     )
 }
 
-function SubmitButton({loading, label, icon} : any) {
+function SubmitButton({ loading, label, icon }: any) {
     return (
-        <button disabled={loading} className="w-full group relative py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white font-bold tracking-widest skew-w-[-10deg] shadow-[0_0_15px_rbga(147,51,234,0.4)] transition-all active:scale-95 overflow-hidden">
+        <button disabled={loading} className="px-8 py-3 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
             <div className="flex items-center justify-center gap-2 skew-x-[10deg]">
                 {loading ? (
                     <span className="animate-pulse">SYNCHRONIZING...</span>
