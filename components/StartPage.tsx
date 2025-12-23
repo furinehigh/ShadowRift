@@ -65,7 +65,7 @@ function StartPage() {
 
       {gameState === 'menu' && (
         <div className='relative z-20 w-full h-full flex flex-col items-center justify-between py-12'>
-          <div className='w-full flex justify-between px-8'>
+          <div className='w-full flex justify-between px-8 '>
             <MenuButton icon={<Settings size={40} />} label='SETTINGS' delay={0.2} onClick={() => setShowSettings(true)} />
             <MenuButton icon={<ShoppingBag size={40} />} label='SHOP' delay={0.3} onClick={() => {}} />
           </div>
@@ -160,7 +160,7 @@ function MenuButton({ icon, label, delay, onClick }: { icon: React.ReactNode, la
             ease: 'easeInOut',
             delay
           }}
-          className='relative'
+          className='relative text-gray-400'
         >
           {icon}
           {/* <span className='absolute left-0 top-0 w-full h-0.5 bg-purple-400 opacity-0 group-hover:opacity-100 animate-pulse' /> */}

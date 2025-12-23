@@ -96,7 +96,7 @@ function SidebarItem({ active, icon, label, onClick }: any) {
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-mono tracking-wider transition-all duration-200`}
+            className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-mono tracking-wider transition-all duration-200 text-gray-400`}
         >
             <span className={active ? 'text-purple-400' : ''}>{icon}</span>
             {label}
