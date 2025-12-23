@@ -1,23 +1,68 @@
 import { motion } from 'framer-motion'
 import React, { useEffect, useState } from 'react'
 
+const BG_ASSETS = [
+  '/bg/far.png',
+  '/bg/mid.png',
+  '/bg/near.png'
+]
+
+const FONT_ASSETS = [
+  {
+    name: 'FightingSpirit',
+    url: '/fonts/Fighting-Spirit.ttf',
+    weight: 'normal',
+    style: 'normal'
+  }
+]
+
 function LoadingScreen({ onComplete }: { onComplete?: () => void }) {
-  const [progress, setProgress] = useState(0)
+  const [loaded, setLoaded] = useState(0)
+  const total = BG_ASSETS.length + FONT_ASSETS.length
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(timer)
-          if (onComplete) setTimeout(onComplete, 200)
-          return 100
-        }
-        return prev + Math.random() * 10
-      })
-    }, 150)
+    let cancelled = false
 
-    return () => clearInterval(timer)
-  }, [onComplete])
+
+    const tick = () => {
+      if (!cancelled) setLoaded(v => v+1)
+    }
+
+    FONT_ASSETS.forEach(font => {
+      const f = new FontFace(font.name, `url(${font.url})`, {
+        weight: font.weight,
+        style: font.style
+      })
+
+      f.load()
+        .then(loadedFont => {
+          document.fonts.add(loadedFont)
+          tick()
+        })
+        .catch(tick)
+    })
+
+    BG_ASSETS.forEach(src => {
+      const img = new Image()
+      img.src = src
+      img.onload = tick
+      img.onerror = tick
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const progress = Math.min(100, Math.round((loaded / total) * 100))
+
+  useEffect(() => {
+    if (progress === 100 && onComplete) {
+      const t = setTimeout(onComplete, 250)
+
+      return () => clearTimeout(t)
+    }
+  }, [progress, onComplete])
 
   return (
     <div className='fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0f0f1a]'>
@@ -26,7 +71,7 @@ function LoadingScreen({ onComplete }: { onComplete?: () => void }) {
       </div>
 
       <div className='font-mono text-sm text-purple-200 animate-pulse'>
-        {progress < 100 ? `SYNCHRONIZING RIFTS... ${Math.floor(progress)}%` : 'READY'}
+        {progress < 100 ? `SYNCHRONIZING RIFTS... ${Math.floor(progress)}%` : 'RIFT STABLIZED'}
       </div>
 
       <div className='absolute inset-0 pointer-events-none opacity-20'>
