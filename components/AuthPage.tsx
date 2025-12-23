@@ -135,10 +135,10 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
                                 </motion.form>
                             ) : (
                                 <motion.form
-                                    key='login'                                
-                                    initial={{x: 20, opacity: 0}}
-                                    animate={{x: 0, opacity: 1}}
-                                    exit={{x: -20, opacity: 0}}
+                                    key='login'
+                                    initial={{ x: 20, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    exit={{ x: -20, opacity: 0 }}
                                     onSubmit={handleLogin}
                                     className="space-y-6"
                                 >
@@ -171,9 +171,9 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
                         <AnimatePresence>
                             {error && (
                                 <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
                                     className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded flex items items-center gap-2 text-red-400 text-xs font-mono overflow-hidden"
                                 >
                                     <ShieldAlert size={14} className="shrink-0" />
