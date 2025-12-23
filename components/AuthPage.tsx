@@ -2,7 +2,7 @@
 
 import { createGuestSession, generateRandomUsername, validateAge } from "@/lib/authUtils"
 import { AnimatePresence, motion } from "framer-motion"
-import { Calendar, Dice5, Lock, User } from "lucide-react"
+import { ArrowRight, Calendar, Dice5, Lock, LogIn, ShieldAlert, User } from "lucide-react"
 import React, { useState } from "react"
 
 
@@ -118,7 +118,7 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
                                     <p className="text-[10px] text-gray-600 font-mono text-right">RESTRICTED: 12+</p>
                                 </div>
 
-
+                                <SubmitButton loading={loading} label="INITIALIZE LINK" />
                             </motion.form>
                         ) : (
                             <motion.form>
@@ -142,12 +142,47 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
 
                                     </div>
                                 </div>
+
+                                <SubmitButton loading={loading} label='RESTORE SESSION' icon={<LogIn size={18} />} />
                             </motion.form>
+                        )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div 
+                                initial={{height: 0, opacity: 0}}
+                                animate={{height: 'auto', opacity: 1}}
+                                exit={{height: 0, opacity: 0}}
+                                className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded flex items items-center gap-2 text-red-400 text-xs font-mono overflow-hidden"
+                                >
+                                <ShieldAlert size={14} className="shrink-0" />
+                                {error}
+                            </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
             </motion.div>
 
         </div>
+    )
+}
+
+function SubmitButton({loading, label, icon} : any) {
+    return (
+        <button disabled={loading} className="w-full group relative py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white font-bold tracking-widest skew-w-[-10deg] shadow-[0_0_15px_rbga(147,51,234,0.4)] transition-all active:scale-95 overflow-hidden">
+            <div className="flex items-center justify-center gap-2 skew-x-[10deg]">
+                {loading ? (
+                    <span className="animate-pulse">SYNCHRONIZING...</span>
+                ) : (
+                    <>
+                        {icon || <ArrowRight size={18} />}
+                        {label}
+                    </>
+                )}
+            </div>
+
+            <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[20deg] group-hover:animate-[shimmer_1s_infinte]" />
+        </button>
     )
 }

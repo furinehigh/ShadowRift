@@ -10,6 +10,8 @@ import { realms } from '@/lib/realms'
 import { Play, Settings, ShoppingBag } from 'lucide-react'
 import SettingsPage from './SettingsPage'
 import ShopPage from './ShopPage'
+import { checkExistingSession } from '@/lib/authUtils'
+import AuthPage from './AuthPage'
 
 
 function StartPage() {
@@ -17,6 +19,16 @@ function StartPage() {
   const [menuScroll, setMenuScroll] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
   const [showShop, setShowShop] = useState(false)
+
+  useEffect(() => {
+    const hasSession = checkExistingSession()
+
+    if (hasSession) {
+      setGameState('loading')
+    } else {
+      setGameState('auth')
+    }
+  }, [])
 
   useEffect(() => {
     if (gameState !== 'menu') return
@@ -34,7 +46,11 @@ function StartPage() {
     setGameState('playing')
   }
 
-  const isModalOpen = showSettings || showShop
+  const handleAuthSuccess = () => {
+    setGameState('loading')
+  }
+
+  const isModalOpen = showSettings || showShop || gameState === 'auth'
 
   if (gameState === 'playing') {
     return (
@@ -47,8 +63,20 @@ function StartPage() {
       </div>
     )
   }
+
+  if (gameState === 'initializing') return <div className='bg-[#0f0f1a] font-mono' />
+
   return (
     <div className='relative w-screen h-screen overflow-hidden bg-[#0f0f1a] font-mono'>
+
+      <AnimatePresence>
+        {gameState === 'auth' && (
+          <motion.div key='auth' exit={{opacity: 0, scale: 1.1, filter: 'blur(10px)'}} className='absolute inset-0 z-50'>
+            <AuthPage onAuthComplete={handleAuthSuccess} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {gameState === 'loading' && (
           <motion.div

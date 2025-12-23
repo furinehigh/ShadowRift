@@ -1,4 +1,4 @@
-export type GameState = 'loading' | 'menu' | 'playing' | 'settings'
+export type GameState = 'initializing' | 'auth' | 'loading' | 'menu' | 'playing'
 
 export type RealmConfig = {
     id: 'shadow' | 'rift'
