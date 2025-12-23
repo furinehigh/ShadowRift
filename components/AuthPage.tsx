@@ -73,7 +73,16 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
         >
 
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 z-50 flex items-center justify-around p-4">
+                <div className="flex flex-col">
+                    <h1 className="text-5xl font-bold mb-3">
+                        WELCOME!
+                    </h1>
+                    <h1 className="text-3xl ">
+                        BUT BEFORE YOU START PLAYING.
+                    </h1>
+                    <p className="text-purple-400 text-xs tracking-[0.5rem] mt-2">CHOOSE YOUR FATE.</p>
+                </div>
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
