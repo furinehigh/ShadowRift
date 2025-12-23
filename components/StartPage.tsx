@@ -9,12 +9,14 @@ import RealmScene from './bg/RealmScene'
 import { realms } from '@/lib/realms'
 import { Play, Settings, ShoppingBag } from 'lucide-react'
 import SettingsPage from './SettingsPage'
+import ShopPage from './ShopPage'
 
 
 function StartPage() {
   const [gameState, setGameState] = useState<GameState>('loading')
   const [menuScroll, setMenuScroll] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
+  const [showShop, setShowShop] = useState(false)
 
   useEffect(() => {
     if (gameState !== 'menu') return
@@ -31,6 +33,8 @@ function StartPage() {
   const handlePlay = () => {
     setGameState('playing')
   }
+
+  const isModalOpen = showSettings || showShop
 
   if (gameState === 'playing') {
     return (
@@ -67,10 +71,10 @@ function StartPage() {
         <div className='relative z-20 w-full h-full flex flex-col items-center justify-between py-12'>
           <div className='w-full flex justify-between px-8 '>
             <MenuButton icon={<Settings size={40} />} label='SETTINGS' delay={0.2} onClick={() => setShowSettings(true)} />
-            <MenuButton icon={<ShoppingBag size={40} />} label='SHOP' delay={0.3} onClick={() => {}} />
+            <MenuButton icon={<ShoppingBag size={40} />} label='SHOP' delay={0.3} onClick={() => setShowShop(true)} />
           </div>
 
-          <div className='flex-1 flex flex-col items-center justify-center relative'>
+          <div className={`flex-1 flex flex-col items-center justify-center relative transition-all duration-500 ${isModalOpen ? 'opacity-0 scale-90 blur-sm' : 'opacity-100'}`}>
             <motion.div
               initial={{ y: 200, opacity: 0, scale: 0.9 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -106,7 +110,7 @@ function StartPage() {
 
           </div>
 
-          <div className='flex gap-4 md:gap-12 items-end justify-center'>
+          <div className={`flex gap-4 md:gap-12 items-end justify-center transition-all duration-500 ${isModalOpen ? 'translate-y-20 opacity-0' : 'translate-y-0 opacity-100'}`}>
             <BottomNavButton label='MULTIPLAYER' delay={0.2} />
             <BottomNavButton label='FRIENDS' delay={0.3} />
             <BottomNavButton label='PROFILE' delay={0.2} />
@@ -117,6 +121,12 @@ function StartPage() {
       <AnimatePresence>
         {showSettings && (
           <SettingsPage onClose={() => setShowSettings(false)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showShop && (
+          <ShopPage onClose={() => setShowShop(false)} />
         )}
       </AnimatePresence>
     </div>

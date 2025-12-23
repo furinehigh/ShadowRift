@@ -2,30 +2,16 @@
 
 import { motion } from "framer-motion"
 import { Bell, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react"
+import { ModalShell } from "./modals/ModalShell"
 
 
 export default function ShopPage({onClose} : {onClose: () => void}) {
     return (
-        <motion.div 
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            exit={{opacity: 0}}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-        >
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[100px] animate-pulse" />
-            </div>
+        <ModalShell onClose={onClose} size="lg" >
 
-            <motion.div
-                initial={{scale: 0.9, y: 20}}
-                animate={{scale: 1, y: 0}}
-                exit={{scale: 0.9, y: 20}}
-                className="relative w-full max-w-4xl bg-[#0f0f1a] border border-white/10 rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[500px]"
+            <div
+                className="flex min-h-[500px]"
             >
-                <button className="absolute top-4 right-4 z-20 p-2 text-gray-400 hover:text-white bg-black/40 hover:bg-white/10 rounded-full transition-all" onClick={onClose}>
-                    <X size={24} />
-                </button>
-
                 <div className="w-full md:w-1/2 bg-gradient-to-br from-black/40 to-purple-900/20 flex flex-col items-center justify-center p-12 border-b md:border-b-0 md:border-r border-white/10 relative overflow-hidden">
                     <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[40px_40px] opacity-50" />
 
@@ -53,7 +39,7 @@ export default function ShopPage({onClose} : {onClose: () => void}) {
                     </div>
                 </div>
                 <div className="w-full md:w-1/2 p-12 flex flex-col justify-center items-start text-left bg-[#0f0f1a]">
-                    <h2 className="text-4xl md:text-5xl font-custom text-white mb-4 tracking-wide text-shadow-glow">
+                    <h2 className="text-2xl md:text-4xl font-custom text-white mb-4 tracking-wide text-shadow-glow">
                         VENDOR<br />OFFLINE
                     </h2>
 
@@ -87,7 +73,7 @@ export default function ShopPage({onClose} : {onClose: () => void}) {
                         </span>
                     </div>
                 </div>
-            </motion.div>
-        </motion.div>
+            </div>
+        </ModalShell>
     )
 }

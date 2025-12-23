@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { Gamepad2, Keyboard, Monitor, RotateCcw, Save, Volume2, X } from "lucide-react"
 import { useState } from "react"
+import { ModalShell } from "./modals/ModalShell"
 
 
 
@@ -12,19 +13,16 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
     const [activeTab, setActiveTab] = useState<Tab>('graphics')
 
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-12 bg-black/80 backdrop-blur-sm"
-        >
-            <div className="w-full max-w-5xl h-[80vh] flex flex-col md:flex-row bg-[#0f0f1a] border border-white/10 shadow-2xl overflow-hidden rounded-xl">
-                <div className="w-full md:w-64 bg-black/20 border-r border-white/5 flex flex-col">
+        <ModalShell onClose={onClose} size="xl">
+            <div className="h-[80vh] flex ">
+                <div className="w-64 bg-black/30 border-r border-white/5 flex flex-col">
 
                     <div className="p-6 border-b border-white/5">
-                        <h2 className="text-2xl font-custom text-white tracking-widest text-shadow-glow">
+                        <h2 className="text-2xl font-custom text-white tracking-widest text-shadow-glow mb-3">
                             SETTINGS
                         </h2>
+
+                        <div className="w-16 h-1 bg-purple-600" />
                     </div>
 
                     <div className="flex-1 py-4 space-y-1">
@@ -64,9 +62,6 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                         <h3 className="text-xl text-purple-200 font-mono tracking-wider uppercase">
                             {activeTab}
                         </h3>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white">
-                            <X size={24} />
-                        </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -80,7 +75,7 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                         <button className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
                             <RotateCcw size={16} /> RESET DEFAULTS
                         </button>
-                        <button onClick={() => {}} className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
+                        <button onClick={() => { }} className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
                             <span className="flex items-center gap-2 skew-x-[10deg]">
                                 <Save size={18} /> APPLY CHANGES
                             </span>
@@ -88,7 +83,7 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </ModalShell>
     )
 }
 
@@ -108,7 +103,7 @@ function SidebarItem({ active, icon, label, onClick }: any) {
 
 function GraphicsSettings() {
     return (
-        <div className="space-y-8 font-mono max-w-2xl animate-slide-up duration-500">
+        <div className="space-y-8 font-mono animate-slide-up duration-500">
             <SettingRow label='Resolution' description='Window resolution scale'>
                 <select name="resolution" className="bg-black/40 border border-white/20 text-white px-4 py-2 rounded focus:border-purple-500 outline-none w-48">
                     <option value="">1920 x 1080</option>
@@ -148,7 +143,7 @@ function GraphicsSettings() {
 
 function AudioSettings() {
     return (
-        <div className="space-y-8 font-mono max-w-2xl animate-slide-up duration-500">
+        <div className="space-y-8 font-mono animate-slide-up duration-500">
             <SettingRow label='Master Volume' description='Global sound level'>
                 <RangeSlider value={75} />
             </SettingRow>
@@ -171,7 +166,7 @@ function AudioSettings() {
 
 function ControlsSettings() {
     return (
-        <div className="space-y-6 font-mono max-w-2xl animate-slide-up duration-500">
+        <div className="space-y-6 font-mono animate-slide-up duration-500">
             <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">Movement</div>
             <KeybindRow action='Move Left' keys={['A', '←']} />
             <KeybindRow action='Move Right' keys={['D', '→']} />
@@ -193,7 +188,7 @@ function ControlsSettings() {
 
 function GamePlaySettings() {
     return (
-        <div className="space-y-8 font-mono max-w-2xl animate-slide-up duration-500">
+        <div className="space-y-8 font-mono  animate-slide-up duration-500">
             <SettingRow label='Show FPS' description='Display frame counter'>
                 <ToggleSwitch checked={true} />
             </SettingRow>
