@@ -107,10 +107,12 @@ export default function SplitWorld() {
 
     const inputs = useRef({ left: false, right: false, jump: false, attack: false })
 
+    
     const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
-
+        
         if (p.isClimbing && p.climbTargetY !== null) {
+            console.log('player is climbing', p.isClimbing)
 
             p.y += (p.climbTargetY - p.y) * CLIMB_SPEED * dt
 
@@ -171,7 +173,7 @@ export default function SplitWorld() {
                 return
             }
 
-            if (p.y + p.height > bTop + 10) {
+            if (p.y + p.height > bTop + 10 && (nearLeftEdge || nearRightEdge)) {
 
                 touchingWall = true
                 p.vx = 0
