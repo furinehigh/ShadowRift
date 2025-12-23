@@ -15,7 +15,7 @@ const CLIMB_SPEED = 6
 const WALL_SLIDE_SPEED = 50
 const RIFT_COOLDOWN = 5000
 const PLAYER_W = 40
-const PLAYER_H = 40
+const PLAYER_H = 60
 
 
 const playSound = (type: 'jump' | 'rift' | 'land' | 'climb') => {
@@ -146,7 +146,7 @@ export default function SplitWorld() {
 
             if (!overlap) continue
 
-            const headNearLedge = p.y + p.height >= bTop - 10 && p.y + p.height <= bTop + 20
+            const headNearLedge = p.y + p.height >= bTop - 10 && p.y + p.height <= bTop + 60
             const nearLeftEdge = Math.abs((p.x + p.width) - b.x) < 12
             const nearRightEdge = Math.abs(p.x - (b.x + b.width)) < 12
 
