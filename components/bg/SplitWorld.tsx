@@ -8,6 +8,11 @@ import { Building, Platform, PlayerState } from "@/types/types"
 import { useGameLoop } from "@/hooks/useGameLoop"
 import MobileControls from "../mobile/MobileControls"
 import { Skull, UserIcon, Zap } from "lucide-react"
+import { useSettings } from "@/context/SettingsContext"
+import OrientationGuard from "../mobile/OrientationGuard"
+import { AnimatePresence } from "framer-motion"
+import PauseMenu from "../PauseMenu"
+import SettingsPage from "../SettingsPage"
 
 const GRAVITY = 2000
 const JUMP_FORCE = -850
@@ -56,17 +61,32 @@ interface ExtendedPlayerState extends PlayerState {
 export default function SplitWorld() {
     const { p1Realm, p2Realm, setP1Realm } = useRealmStore()
     const { width: windowWidth, height: windowHeight, isClient } = useWindowSize()
+    const {keybinds} = useSettings()
     const [, setTick] = useState(0)
     const [username, setUsername] = useState('Unknown')
 
-    // const [isPaused]
+    const [isPaused, setIsPaused] = useState(false)
+    const [showSettings, setShowSettings] = useState(false)
+    const [ping, setPing] = useState(0)
+    const [isOnline, setIsOnline] = useState(false) // demo for now
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('shadow_rift_user')
             if (saved) setUsername(saved)
+
+            setIsOnline(Math.random() > 0.5)
         }
     })
+
+    // demo ping
+    useEffect(() => {
+        if (!isOnline) return 
+        const interval = setInterval(() => {
+            setPing(Math.floor(20 + Math.random() * 40))
+        }, 2000)
+        return () => clearInterval(interval)
+    }, [isOnline])
 
     const generateSkyline = (type: 'normal' | 'rift'): Building[] => {
         const buildings: Building[] = []
@@ -248,7 +268,7 @@ export default function SplitWorld() {
 
     useGameLoop((dt) => {
 
-        if (!isClient) return
+        if (!isClient || isPaused) return
 
         p1.current.vx = 0
 
@@ -311,21 +331,26 @@ export default function SplitWorld() {
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             const k = e.key.toLowerCase()
-            if (k === 'a' || k === 'arrowleft') inputs.current.left = true
-            if (k === 'd' || k === 'arrowright') inputs.current.right = true
-            if (k === ' ' || k === 'w' || k === 'arrowup') inputs.current.jump = true
-            if (k === 'z' || k === 'k') inputs.current.attack = true
 
-            if (k === 'r') {
+            if (k === 'escape') {
+                setIsPaused(prev => !prev)
+            }
+
+            if (k === keybinds.left || k === 'arrowleft') inputs.current.left = true
+            if (k === keybinds.right || k === 'arrowright') inputs.current.right = true
+            if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = true
+            if (k === keybinds.attack) inputs.current.attack = true
+
+            if (k === keybinds.rift) {
                 handleRiftSwitch()
             }
         }
 
         const onKeyUp = (e: KeyboardEvent) => {
             const k = e.key.toLowerCase()
-            if (k === 'a' || k === 'arrowleft') inputs.current.left = false
-            if (k === 'd' || k === 'arrowright') inputs.current.right = false
-            if (k === ' ' || k === 'w' || k === 'arrowup') inputs.current.jump = false
+            if (k === keybinds.left || k === 'arrowleft') inputs.current.left = false
+            if (k === keybinds.right || k === 'arrowright') inputs.current.right = false
+            if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = false
         }
 
 
@@ -337,7 +362,7 @@ export default function SplitWorld() {
             window.removeEventListener('keydown', onKeyDown)
             window.removeEventListener('keyup', onKeyUp)
         }
-    }, [])
+    }, [keybinds])
 
     const handleRiftSwitch = () => {
         const now = Date.now()
@@ -353,6 +378,10 @@ export default function SplitWorld() {
         setP1Realm(newRealm)
     }
 
+    const handleExit = () => {
+        window.location.reload()
+    }
+
 
     const isSplit = p1Realm !== p2Realm
 
@@ -360,6 +389,19 @@ export default function SplitWorld() {
 
     return (
         <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-[#0f0f1a]">
+            <OrientationGuard />
+
+            <AnimatePresence>
+                {isPaused && (
+                    <PauseMenu onResume={() => setIsPaused(false)} onSettings={() => setShowSettings(true)} onExit={handleExit} isOnline={isOnline} />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showSettings && (
+                    <SettingsPage onClose={() => setShowSettings(false)} />
+                )}
+            </AnimatePresence>
 
             <div className="absolute top-0 left-0 w-full p-4 z-10 pointer-events-none flex justify-between items-start">
                 <PlayerHud
@@ -431,6 +473,7 @@ export default function SplitWorld() {
                 onRight={(active) => inputs.current.right = active}
                 onRift={handleRiftSwitch}
                 onAttack={() => inputs.current.attack = true}
+                onPause={() => setIsPaused(true)}
             />
 
 

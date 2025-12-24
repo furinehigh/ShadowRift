@@ -201,7 +201,7 @@ function ControlsSettings() {
             </div>
 
             {Object.entries(keybinds).map(([action, key]) => (
-                <div key={action} className="flex items-center justify-center py-3 border-b border-white/5">
+                <div key={action} className="flex items-center justify-between py-3 border-b border-white/5">
                     <span className="text-gray-300 capitalize">{action}</span>
                     <button onClick={() => handleKeyBind(action)} className={`min-w-[80px] px-4 py-2 rounded text-sm font-bold border transition-all ${listening === action ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500 animate-pulse' : 'bg-white/5 text-white border-white/10 hover:border-purple-500'}`}>
                         {listening === action ? 'PRESS KEY' : key.toUpperCase()}
