@@ -45,7 +45,7 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
     }, [keybinds, mobileLayout, loaded])
 
     const setKeybind = (action: keyof Keybinds, key: string) => {
-        setKeybinds(prev => ({...prev, [action]: key.toLocaleLowerCase}))
+        setKeybinds(prev => ({...prev, [action]: key.toLocaleLowerCase()}))
 
     }
 

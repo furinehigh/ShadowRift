@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Gamepad2, Keyboard, Monitor, RotateCcw, Save, Smartphone, Volume2, X } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ModalShell } from "./modals/ModalShell"
 import { useSettings } from "@/context/SettingsContext"
 
@@ -74,7 +74,7 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <div className="h-20 border-t border-white/5 bg-black/20 px-8 flex items-center justify-between">
-                        <button className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                        <button onClick={resetDefaults} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
                             <RotateCcw size={16} /> RESET DEFAULTS
                         </button>
                         <button onClick={() => { }} className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
@@ -169,6 +169,19 @@ function AudioSettings() {
 function ControlsSettings({onClose}: {onClose: () => void}) {
     const {keybinds, setKeybind, setEditingHud} = useSettings()
     const [listening, setListening] = useState<string | null>(null)
+    const [isMobille, setIsMobile ] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => {
+            const hasTouch = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0
+            const isSmall = window.innerWidth < 1024
+            setIsMobile(hasTouch && isSmall)
+        }
+
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     const handleKeyBind = (action: string) => {
         setListening(action)
@@ -189,7 +202,7 @@ function ControlsSettings({onClose}: {onClose: () => void}) {
 
     return (
         <div className="space-y-6 font-mono animate-slide-up duration-500">
-            <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-lg mb-8">
+            {isMobille && <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-lg mb-8">
                 <div className="flex items-center justify-between">
                     <div >
                         <h4 className="text-white font-bold flex items-center gap-2"><Smartphone size={16} /> MOBILE HUD</h4>
@@ -199,7 +212,7 @@ function ControlsSettings({onClose}: {onClose: () => void}) {
                         EDIT LAYOUT
                     </button>
                 </div>
-            </div>
+            </div>}
 
             <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">
                 Keyboard Bindings

@@ -26,7 +26,7 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
 
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
-    })
+    }, [])
 
     if (!isMobile) return null
 

@@ -389,7 +389,7 @@ export default function SplitWorld() {
         <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-[#0f0f1a]">
 
             <AnimatePresence>
-                {isPaused && (
+                {isPaused && !showSettings && (
                     <PauseMenu onResume={() => setIsPaused(false)} onSettings={() => setShowSettings(true)} onExit={handleExit} isOnline={isOnline} />
                 )}
             </AnimatePresence>
