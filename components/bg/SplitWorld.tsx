@@ -59,6 +59,8 @@ export default function SplitWorld() {
     const [, setTick] = useState(0)
     const [username, setUsername] = useState('Unknown')
 
+    // const [isPaused]
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('shadow_rift_user')

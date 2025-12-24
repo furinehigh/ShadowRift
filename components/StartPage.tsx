@@ -12,7 +12,15 @@ import SettingsPage from './SettingsPage'
 import ShopPage from './ShopPage'
 import { checkExistingSession } from '@/lib/authUtils'
 import AuthPage from './AuthPage'
+import { SettingsProvider } from '@/context/SettingsContext'
 
+export default function StartPageWrapper() {
+  return (
+    <SettingsProvider>
+      <StartPage />
+    </SettingsProvider>
+  )
+}
 
 function StartPage() {
   const [gameState, setGameState] = useState<GameState>('initializing')
@@ -161,7 +169,6 @@ function StartPage() {
   )
 }
 
-export default StartPage
 
 
 function MenuButton({ icon, label, delay, onClick }: { icon: React.ReactNode, label: string, delay: number, onClick: () => void }) {

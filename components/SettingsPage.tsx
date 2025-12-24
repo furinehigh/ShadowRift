@@ -1,9 +1,10 @@
 'use client'
 
 import { motion } from "framer-motion"
-import { Gamepad2, Keyboard, Monitor, RotateCcw, Save, Volume2, X } from "lucide-react"
+import { Gamepad2, Keyboard, Monitor, RotateCcw, Save, Smartphone, Volume2, X } from "lucide-react"
 import { useState } from "react"
 import { ModalShell } from "./modals/ModalShell"
+import { useSettings } from "@/context/SettingsContext"
 
 
 
@@ -11,6 +12,7 @@ type Tab = 'graphics' | 'audio' | 'controls' | 'gameplay'
 
 export default function SettingsPage({ onClose }: { onClose: () => void }) {
     const [activeTab, setActiveTab] = useState<Tab>('graphics')
+    const {resetDefaults} = useSettings()
 
     return (
         <ModalShell onClose={onClose} size="xl">
@@ -165,21 +167,47 @@ function AudioSettings() {
 
 
 function ControlsSettings() {
+    const {keybinds, setKeybind, setEditingHud} = useSettings()
+    const [listening, setListening] = useState<string | null>(null)
+
+    const handleKeyBind = (action: string) => {
+        setListening(action)
+
+        const listener = (e: KeyboardEvent) => {
+            e.preventDefault()
+            setKeybind(action as any, e.key)
+            setListening(null)
+            window.removeEventListener('keydown', listener)
+        }
+        window.addEventListener('keydown', listener)
+    }
+
     return (
         <div className="space-y-6 font-mono animate-slide-up duration-500">
-            <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">Movement</div>
-            <KeybindRow action='Move Left' keys={['A', '←']} />
-            <KeybindRow action='Move Right' keys={['D', '→']} />
-            <KeybindRow action='Move Left' keys={['SPACE', 'W', '↑']} />
-
-            <div className="h-px bg-white/10 my-6" />
-
-            <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">
-                Combat & Abilities
+            <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-lg mb-8">
+                <div className="flex items-center justify-between">
+                    <div >
+                        <h4 className="text-white font-bold flex items-center gap-2"><Smartphone size={16} /> MOBILE HUD</h4>
+                        <p className="text-xs text-gray-400 mt-1">Customize touch control postitions</p>
+                    </div>
+                    <button onClick={() => setEditingHud(true)} className="px-4 py-2 bg-purple-600/50 hover:bg-purple-600 text-white text-xs rounded border-purple-500/50 transition-colors">
+                        EDIT LAYOUT
+                    </button>
+                </div>
             </div>
 
-            <KeybindRow action='Attack' keys={['Z', 'K']} />
-            <KeybindRow action='Realm Switch (Rift)' keys={['R']} highlight />
+            <div className="text-xs text-gray-500 mb-4 uppercase tracking-widest">
+                Keyboard Bindings
+            </div>
+
+            {Object.entries(keybinds).map(([action, key]) => (
+                <div key={action} className="flex items-center justify-center py-3 border-b border-white/5">
+                    <span className="text-gray-300 capitalize">{action}</span>
+                    <button onClick={() => handleKeyBind(action)} className={`min-w-[80px] px-4 py-2 rounded text-sm font-bold border transition-all ${listening === action ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500 animate-pulse' : 'bg-white/5 text-white border-white/10 hover:border-purple-500'}`}>
+                        {listening === action ? 'PRESS KEY' : key.toUpperCase()}
+                    </button>
+                </div>
+            ))}
         </div>
     )
 }
