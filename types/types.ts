@@ -60,3 +60,28 @@ export type ControlProps = {
     onRift: () => void
     onAttack: ()=> void
 }
+
+export interface Keybinds {
+    left: string
+    right: string
+    jump: string
+    attack: string
+    rift: string
+}
+
+export interface MobileLayout {
+    dpadX: number
+    dpadY: number
+    actionX: number
+    actionY: number
+}
+
+export interface SettingsContextType {
+    keybinds: Keybinds
+    setKeybind: (action: keyof Keybinds, key: string) => void
+    mobileLayout: MobileLayout
+    setMobileLayout: (layout: MobileLayout) => void
+    isEditingHud: boolean
+    setEditingHud: (v: boolean) => void
+    resetDefaults: () => void
+}
