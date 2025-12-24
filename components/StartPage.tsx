@@ -13,10 +13,12 @@ import ShopPage from './ShopPage'
 import { checkExistingSession } from '@/lib/authUtils'
 import AuthPage from './AuthPage'
 import { SettingsProvider } from '@/context/SettingsContext'
+import OrientationGuard from './mobile/OrientationGuard'
 
 export default function StartPageWrapper() {
   return (
     <SettingsProvider>
+      <OrientationGuard />
       <StartPage />
     </SettingsProvider>
   )
@@ -79,7 +81,7 @@ function StartPage() {
 
       <AnimatePresence>
         {gameState === 'auth' && (
-          <motion.div key='auth' exit={{opacity: 0, scale: 1.1, filter: 'blur(10px)'}} className='absolute inset-0 z-50'>
+          <motion.div key='auth' exit={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }} className='absolute inset-0 z-50'>
             <AuthPage onAuthComplete={handleAuthSuccess} />
           </motion.div>
         )}

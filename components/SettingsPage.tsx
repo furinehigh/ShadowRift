@@ -69,7 +69,7 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                     <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                         {activeTab === 'graphics' && <GraphicsSettings />}
                         {activeTab === 'audio' && <AudioSettings />}
-                        {activeTab === 'controls' && <ControlsSettings />}
+                        {activeTab === 'controls' && <ControlsSettings onClose={onClose} />}
                         {activeTab === 'gameplay' && <GamePlaySettings />}
                     </div>
 
@@ -166,7 +166,7 @@ function AudioSettings() {
 }
 
 
-function ControlsSettings() {
+function ControlsSettings({onClose}: {onClose: () => void}) {
     const {keybinds, setKeybind, setEditingHud} = useSettings()
     const [listening, setListening] = useState<string | null>(null)
 
@@ -182,6 +182,11 @@ function ControlsSettings() {
         window.addEventListener('keydown', listener)
     }
 
+    const handleEditHud = () => {
+        setEditingHud(true)
+        onClose()
+    }
+
     return (
         <div className="space-y-6 font-mono animate-slide-up duration-500">
             <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-lg mb-8">
@@ -190,7 +195,7 @@ function ControlsSettings() {
                         <h4 className="text-white font-bold flex items-center gap-2"><Smartphone size={16} /> MOBILE HUD</h4>
                         <p className="text-xs text-gray-400 mt-1">Customize touch control postitions</p>
                     </div>
-                    <button onClick={() => setEditingHud(true)} className="px-4 py-2 bg-purple-600/50 hover:bg-purple-600 text-white text-xs rounded border-purple-500/50 transition-colors">
+                    <button onClick={handleEditHud} className="px-4 py-2 bg-purple-600/50 hover:bg-purple-600 text-white text-xs rounded border-purple-500/50 transition-colors">
                         EDIT LAYOUT
                     </button>
                 </div>
@@ -204,7 +209,7 @@ function ControlsSettings() {
                 <div key={action} className="flex items-center justify-between py-3 border-b border-white/5">
                     <span className="text-gray-300 capitalize">{action}</span>
                     <button onClick={() => handleKeyBind(action)} className={`min-w-[80px] px-4 py-2 rounded text-sm font-bold border transition-all ${listening === action ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500 animate-pulse' : 'bg-white/5 text-white border-white/10 hover:border-purple-500'}`}>
-                        {listening === action ? 'PRESS KEY' : key.toUpperCase()}
+                        {listening === action ? 'PRESS KEY' : (key ? String(key).toUpperCase() : "NONE")}
                     </button>
                 </div>
             ))}

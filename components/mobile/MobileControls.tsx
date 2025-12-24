@@ -30,7 +30,7 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
 
     if (!isMobile) return null
 
-    const btnClass = "w-16 h-16 rounded-full flex items-center justify-center text-white select-none active:scale-95 transition-transform backdrop-blur-sm border-2 border-[#4b4c9d] touch-none"
+    const btnClass = "w-16 h-16 rounded-full flex items-center justify-center text-white select-none active:scale-95 transition-transform backdrop-blur-sm border-2 border-[#4b4c9d] touch-none pointer-events-auto"
 
     const bg = { background: 'rgba(0,0,0,0.5)' }
 

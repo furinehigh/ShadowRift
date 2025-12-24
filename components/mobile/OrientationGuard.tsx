@@ -10,19 +10,22 @@ export default function OrientationGuard() {
         const check = () => {
             const isMobile = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0
 
-            if (isMobile && window.innerHeight > window.innerHeight) {
+            if (isMobile && window.innerHeight > window.innerWidth) {
                 setIsPortrait(true)
+                console.log('Its in portrait')
             } else {
+                console.log('Its not in portrait')
                 setIsPortrait(false)
             }
         }
 
         check()
 
+
         window.addEventListener('resize', check)
 
         return () => window.removeEventListener('resize', check)
-    })
+    }, [])
 
     if (!isPortrait) return null
 

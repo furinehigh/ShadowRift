@@ -17,7 +17,7 @@ export default function PauseMenu({onResume, onSettings, onExit, isOnline}: Paus
     const [showExitConfirm, setShowExitConfirm] = useState(false)
 
     return (
-        <div>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
             {!showExitConfirm ? (
                 <motion.div 
                     initial={{scale: 0.9, opacity: 0}}
@@ -58,10 +58,10 @@ export default function PauseMenu({onResume, onSettings, onExit, isOnline}: Paus
                     )}
 
                     <div className="flex gap-4">
-                        <button className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-mono text-sm rounded transition-colors">
+                        <button onClick={() => setShowExitConfirm(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-mono text-sm rounded transition-colors">
                             CANCEL
                         </button>
-                        <button className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold font-mono text-sm rounded shadow-lg transition-colors">
+                        <button onClick={onExit} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold font-mono text-sm rounded shadow-lg transition-colors">
                             CONFIRM EXIT
                         </button>
                     </div>

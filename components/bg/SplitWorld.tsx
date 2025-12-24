@@ -9,9 +9,8 @@ import { useGameLoop } from "@/hooks/useGameLoop"
 import MobileControls from "../mobile/MobileControls"
 import { Skull, UserIcon, Zap } from "lucide-react"
 import { useSettings } from "@/context/SettingsContext"
-import OrientationGuard from "../mobile/OrientationGuard"
 import { AnimatePresence } from "framer-motion"
-import PauseMenu from "../PauseMenu"
+import PauseMenu from "../modals/PauseMenu"
 import SettingsPage from "../SettingsPage"
 
 const GRAVITY = 2000
@@ -75,7 +74,6 @@ export default function SplitWorld() {
             const saved = localStorage.getItem('shadow_rift_user')
             if (saved) setUsername(saved)
 
-            setIsOnline(Math.random() > 0.5)
         }
     })
 
@@ -389,7 +387,6 @@ export default function SplitWorld() {
 
     return (
         <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-[#0f0f1a]">
-            <OrientationGuard />
 
             <AnimatePresence>
                 {isPaused && (
