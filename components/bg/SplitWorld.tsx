@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Building, Platform, PlayerState } from "@/types/types"
 import { useGameLoop } from "@/hooks/useGameLoop"
 import MobileControls from "../mobile/MobileControls"
-import { Skull, UserIcon, Zap } from "lucide-react"
+import { Skull, UserIcon, Wifi, Zap } from "lucide-react"
 import { useSettings } from "@/context/SettingsContext"
 import { AnimatePresence } from "framer-motion"
 import PauseMenu from "../modals/PauseMenu"
@@ -67,7 +67,7 @@ export default function SplitWorld() {
     const [isPaused, setIsPaused] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
     const [ping, setPing] = useState(0)
-    const [isOnline, setIsOnline] = useState(false) // demo for now
+    const [isOnline, setIsOnline] = useState(true) // demo for now
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -411,9 +411,12 @@ export default function SplitWorld() {
                 />
 
                 <div className="flex flex-col items-center">
-                    <div className="bg-black/50 text-white px-3 py-1 rounded text-xs border border-white/10 font-bold">
-                        VS
-                    </div>
+                    {isOnline && (
+                        <div className={`flex items-center gap-1 text-[10px] font-bold ${ping > 100 ? 'text-red-500' : 'text-white'}`}>
+                            <Wifi size={10} />
+                            {ping}ms
+                        </div>
+                    )}
                 </div>
 
                 <PlayerHud 
