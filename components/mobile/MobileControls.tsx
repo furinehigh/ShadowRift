@@ -35,11 +35,11 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
     const bg = { background: 'rgba(0,0,0,0.5)' }
 
     return (
-        <div className="absolute inset-0 z-50 pointer-events-none flex flex-col justify-end pb-8 px-4">
-            <div className="fixed top-4 right-4 pointer-events-auto flex gap-3">
+        <div className="absolute inset-0 z-49 pointer-events-none flex flex-col justify-end pb-8 px-4">
+            <div className="fixed top-24 right-4 pointer-events-auto flex gap-3">
                 {isEditingHud ? (
-                    <button onClick={() => setEditingHud(false)} className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white shadow-lg animate-pulse">
-                        <Check size={20} />
+                    <button onClick={() => setEditingHud(false)} className="p-2 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white shadow-lg backdrop-blur-md">
+                        <Check size={20} className="mr-1" /> Save
                     </button>
                 ) : (
                     <button onClick={onPause} className="w-10 h-10 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md">
@@ -108,7 +108,7 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
                         </button>
 
                         <button className={`${btnClass} w-20 h-20 mb-2`} style={{ backgroundColor: '#4b4c9d' }} onClick={!isEditingHud ? onJump : undefined}>
-                            <ArrowUp size={32} />
+                            {isEditingHud ? <GripHorizontal /> : <ArrowUp size={32} />}
                         </button>
                     </motion.div>
                 </div>

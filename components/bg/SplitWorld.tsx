@@ -60,7 +60,7 @@ interface ExtendedPlayerState extends PlayerState {
 export default function SplitWorld() {
     const { p1Realm, p2Realm, setP1Realm } = useRealmStore()
     const { width: windowWidth, height: windowHeight, isClient } = useWindowSize()
-    const {keybinds} = useSettings()
+    const {keybinds, isEditingHud} = useSettings()
     const [, setTick] = useState(0)
     const [username, setUsername] = useState('Unknown')
 
@@ -389,7 +389,7 @@ export default function SplitWorld() {
         <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-[#0f0f1a]">
 
             <AnimatePresence>
-                {isPaused && !showSettings && (
+                {isPaused && !showSettings && !isEditingHud && (
                     <PauseMenu onResume={() => setIsPaused(false)} onSettings={() => setShowSettings(true)} onExit={handleExit} isOnline={isOnline} />
                 )}
             </AnimatePresence>
