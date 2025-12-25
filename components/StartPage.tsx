@@ -14,6 +14,7 @@ import { checkExistingSession } from '@/lib/authUtils'
 import AuthPage from './AuthPage'
 import { SettingsProvider } from '@/context/SettingsContext'
 import OrientationGuard from './mobile/OrientationGuard'
+import { useGameStore } from '@/store/gameStore'
 
 export default function StartPageWrapper() {
   return (
@@ -25,7 +26,7 @@ export default function StartPageWrapper() {
 }
 
 function StartPage() {
-  const [gameState, setGameState] = useState<GameState>('initializing')
+  const {gameState, setGameState} = useGameStore()
   const [menuScroll, setMenuScroll] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
   const [showShop, setShowShop] = useState(false)

@@ -18,6 +18,11 @@ export type RealmStoreState = {
     setP2Realm: (r: 'normal' | 'rift') => void
 }
 
+export type GameStoreState = {
+    gameState: GameState
+    setGameState: (s: GameState) => void
+}
+
 export type PlayerState = {
     x: number
     y: number
