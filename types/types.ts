@@ -36,6 +36,11 @@ export type PlayerState = {
     realm: 'normal' | 'rift'
     lastRiftSwitch: number
     hp: number
+    isClimbing: boolean
+    climbTargetY: number | null
+    climbLockX: number | null
+    attackUntil: number
+    attackAnim: string | null
 }
 
 export type Building = {
@@ -63,7 +68,7 @@ export type ControlProps = {
     onRight: (active: boolean) => void
 
     onRift: () => void
-    onAttack: (a: string)=> undefined
+    onAttack: (a: string) => undefined
 }
 
 export interface Keybinds {
@@ -92,12 +97,20 @@ export interface SettingsContextType {
     resetDefaults: () => void
 }
 
-export interface FighterProps { 
-    x: number, 
-    y: number, 
-    width: number, 
+export interface FighterProps {
+    x: number,
+    y: number,
+    width: number,
     height: number,
-    facingRight: number, 
+    facingRight: number,
     anim: string
     variant?: 'player' | 'grunt' | 'elite' | 'boss'
+}
+
+export interface BotInputs {
+    left: boolean
+    right: boolean
+    jump: boolean
+    punch: boolean
+    kick: boolean
 }

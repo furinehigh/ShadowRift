@@ -66,14 +66,6 @@ function getAnim(p: any) {
     return 'animation0'
 }
 
-interface ExtendedPlayerState extends PlayerState {
-    isClimbing: boolean
-    climbTargetY: number | null
-    climbLockX: number | null
-    attackUntil: number
-    attackAnim: string | null
-}
-
 export default function SplitWorld() {
     const { p1Realm, p2Realm, setP1Realm } = useRealmStore()
     const { width: windowWidth, height: windowHeight, isClient } = useWindowSize()
@@ -138,11 +130,11 @@ export default function SplitWorld() {
     }
 
     // player refs
-    const p1 = useRef<ExtendedPlayerState>({
+    const p1 = useRef<PlayerState>({
         x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null
     })
 
-    const p2 = useRef<ExtendedPlayerState>({
+    const p2 = useRef<PlayerState>({
         x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null
     })
 
@@ -154,7 +146,7 @@ export default function SplitWorld() {
     const inputs = useRef({ left: false, right: false, jump: false, punch: false, kick: false })
 
 
-    const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
+    const updatePhysics = (p: PlayerState, dt: number, buildings: Building[]) => {
         if (p.isDead) return
 
         if (p.isClimbing && p.climbTargetY !== null) {
@@ -345,7 +337,7 @@ export default function SplitWorld() {
         setTick(t => t + 1)
     })
 
-    const checkAttackHit = (attacker: ExtendedPlayerState, type: string) => {
+    const checkAttackHit = (attacker: PlayerState, type: string) => {
         const targetArray = attacker.realm === 'normal' ? normalBuildings.current : riftBuildings.current
         const range = type === 'KICK' ? 60 : 40
         const attackX = attacker.facingRight ? attacker.x + PLAYER_W + range : attacker.x - range
