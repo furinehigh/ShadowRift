@@ -66,10 +66,139 @@ function getAnim(p: any) {
     return 'animation0'
 }
 
+
+
+
+const getSafeSpawn = (buildings: Building[], floorY: number) => {
+    const safe = buildings.filter(b => b.width > PLAYER_W + 20).map(b => ({
+        x: b.x + b.width / 2 - PLAYER_W / 2,
+        y: floorY - b.height - PLAYER_H
+    }))
+
+    return safe[Math.floor(Math.random() * safe.length)]
+}
+
+export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[], windowHeight: number) => {
+    if (p.isDead) return
+
+    if (p.isClimbing && p.climbTargetY !== null) {
+        console.log('player is climbing', p.isClimbing)
+
+        p.y += (p.climbTargetY - p.y) * CLIMB_SPEED * dt
+
+        if (Math.abs(p.y - p.climbTargetY!) < 2) {
+            p.y = p.climbTargetY!
+
+            p.isClimbing = false
+            p.isGrounded = true
+
+            p.vy = 0
+            p.climbTargetY = null
+
+            p.climbLockX = null
+        }
+
+        return
+    }
+
+    const floorY = windowHeight
+
+    p.x += p.vx * dt
+    p.vy += GRAVITY * dt
+    p.y += p.vy * dt
+
+    let touchingWall = false
+
+    for (const b of buildings) {
+        const bTop = floorY - b.height
+
+        const overlap = p.x < b.x + b.width && p.x + p.width > b.x && p.y + p.height > bTop
+
+        if (!overlap) continue
+
+        const headNearLedge = p.y + p.height >= bTop - 10 && p.y + p.height <= bTop + 60
+        const nearLeftEdge = Math.abs((p.x + p.width) - b.x) < 12
+        const nearRightEdge = Math.abs(p.x - (b.x + b.width)) < 12
+
+        const isAtEdge = nearLeftEdge || nearRightEdge
+
+        const wallX = nearLeftEdge ? b.x - p.width : b.x + b.width
+
+        if (
+            headNearLedge &&
+            isAtEdge &&
+            !p.isGrounded &&
+            !p.isClimbing
+        ) {
+            p.isClimbing = true
+            p.vx = 0
+            p.vy = 0
+
+            p.climbTargetY = bTop - p.height
+            p.climbLockX = wallX
+
+            p.x = wallX
+
+            playSound('climb')
+            return
+        }
+
+        if (p.y + p.height > bTop + 10 && (nearLeftEdge || nearRightEdge)) {
+
+            touchingWall = true
+            p.vx = 0
+            p.x = wallX
+        }
+
+    }
+
+    if (touchingWall && p.vy > WALL_SLIDE_SPEED) {
+        p.vy = WALL_SLIDE_SPEED
+    }
+
+    // landing on bulding ground
+    p.isGrounded = false
+
+    for (const b of buildings) {
+
+        const bTop = floorY - b.height
+
+        if (p.x + p.width > b.x + 2 &&
+            p.x < b.x + b.width - 2 &&
+            p.y + p.height >= bTop &&
+            p.y + p.height < bTop + 40 &&
+            p.vy >= 0
+        ) {
+
+            p.y = bTop - p.height
+            p.vy = 0
+            p.isGrounded = true
+
+        }
+    }
+
+    if (p.y > floorY + 200) {
+        p.isDead = true
+
+
+        setTimeout(() => {
+            const spawn = getSafeSpawn(buildings, floorY)
+
+            p.x = spawn.x
+            p.y = spawn.y
+            p.vy = 0
+            p.vx = 0
+            p.isDead = false
+            p.isClimbing = false
+            playSound('rift')
+        }, 300)
+    }
+}
+
 export default function SplitWorld() {
     const { p1Realm, p2Realm, setP1Realm } = useRealmStore()
     const { width: windowWidth, height: windowHeight, isClient } = useWindowSize()
-    const {keybinds, isEditingHud} = useSettings()
+    const { keybinds, isEditingHud } = useSettings()
     const [, setTick] = useState(0)
     const [username, setUsername] = useState('Unknown')
 
@@ -88,7 +217,7 @@ export default function SplitWorld() {
 
     // demo ping
     useEffect(() => {
-        if (!isOnline) return 
+        if (!isOnline) return
         const interval = setInterval(() => {
             setPing(Math.floor(20 + Math.random() * 40))
         }, 2000)
@@ -146,131 +275,6 @@ export default function SplitWorld() {
     const inputs = useRef({ left: false, right: false, jump: false, punch: false, kick: false })
 
 
-    const updatePhysics = (p: PlayerState, dt: number, buildings: Building[]) => {
-        if (p.isDead) return
-
-        if (p.isClimbing && p.climbTargetY !== null) {
-            console.log('player is climbing', p.isClimbing)
-
-            p.y += (p.climbTargetY - p.y) * CLIMB_SPEED * dt
-
-            if (Math.abs(p.y - p.climbTargetY!) < 2) {
-                p.y = p.climbTargetY!
-
-                p.isClimbing = false
-                p.isGrounded = true
-
-                p.vy = 0
-                p.climbTargetY = null
-
-                p.climbLockX = null
-            }
-
-            return
-        }
-
-        const floorY = windowHeight
-
-        p.x += p.vx * dt
-        p.vy += GRAVITY * dt
-        p.y += p.vy * dt
-
-        let touchingWall = false
-
-        for (const b of buildings) {
-            const bTop = floorY - b.height
-
-            const overlap = p.x < b.x + b.width && p.x + p.width > b.x && p.y + p.height > bTop
-
-            if (!overlap) continue
-
-            const headNearLedge = p.y + p.height >= bTop - 10 && p.y + p.height <= bTop + 60
-            const nearLeftEdge = Math.abs((p.x + p.width) - b.x) < 12
-            const nearRightEdge = Math.abs(p.x - (b.x + b.width)) < 12
-
-            const isAtEdge = nearLeftEdge || nearRightEdge
-
-            const wallX = nearLeftEdge ? b.x - p.width : b.x + b.width
-
-            if (
-                headNearLedge &&
-                isAtEdge &&
-                !p.isGrounded &&
-                !p.isClimbing
-            ) {
-                p.isClimbing = true
-                p.vx = 0
-                p.vy = 0
-
-                p.climbTargetY = bTop - p.height
-                p.climbLockX = wallX
-
-                p.x = wallX
-
-                playSound('climb')
-                return
-            }
-
-            if (p.y + p.height > bTop + 10 && (nearLeftEdge || nearRightEdge)) {
-
-                touchingWall = true
-                p.vx = 0
-                p.x = wallX
-            }
-
-        }
-
-        if (touchingWall && p.vy > WALL_SLIDE_SPEED) {
-            p.vy = WALL_SLIDE_SPEED
-        }
-
-        // landing on bulding ground
-        p.isGrounded = false
-
-        for (const b of buildings) {
-
-            const bTop = floorY - b.height
-
-            if (p.x + p.width > b.x + 2 &&
-                p.x < b.x + b.width - 2 &&
-                p.y + p.height >= bTop &&
-                p.y + p.height < bTop + 40 &&
-                p.vy >= 0
-            ) {
-
-                p.y = bTop - p.height
-                p.vy = 0
-                p.isGrounded = true
-
-            }
-        }
-
-        if (p.y > floorY + 200) {
-            p.isDead = true
-
-            
-            setTimeout(() => {
-                const spawn = getSafeSpawn(buildings, floorY)
-
-                p.x = spawn.x
-                p.y = spawn.y
-                p.vy = 0
-                p.vx = 0
-                p.isDead = false
-                p.isClimbing = false
-                playSound('rift')
-            }, 300)
-        }
-    }
-
-    const getSafeSpawn = (buildings: Building[], floorY: number) => {
-        const safe = buildings.filter(b => b.width > PLAYER_W + 20).map(b => ({
-            x: b.x + b.width / 2 - PLAYER_W / 2,
-            y: floorY - b.height - PLAYER_H
-        }))
-
-        return safe[Math.floor(Math.random() * safe.length)]
-    }
 
 
     useGameLoop((dt) => {
@@ -323,8 +327,8 @@ export default function SplitWorld() {
             }
         }
 
-        updatePhysics(p1.current, dt, p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current)
-        updatePhysics(p2.current, dt, p2.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current)
+        updatePhysics(p1.current, dt, p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current, windowHeight)
+        updatePhysics(p2.current, dt, p2.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current, windowHeight)
 
         if (p1.current.realm === 'normal') {
             cameras.current.normal = p1.current.x
@@ -446,7 +450,7 @@ export default function SplitWorld() {
                     )}
                 </div>
 
-                <PlayerHud 
+                <PlayerHud
                     player={p2.current}
                     name='Rival_Bot'
                     level={4}
@@ -512,7 +516,7 @@ export default function SplitWorld() {
 }
 
 // HUD
-function PlayerHud({player, name, level, color, align, isMe}: any) {
+function PlayerHud({ player, name, level, color, align, isMe }: any) {
     const isRight = align === 'right'
 
     const now = Date.now()
@@ -547,20 +551,20 @@ function PlayerHud({player, name, level, color, align, isMe}: any) {
                 </div>
 
                 <div className="w-full h-3 bg-black/50 border border-white/10 skew-x-[10deg] relative overflow-hidden">
-                    <div className={`h-full transition-all duration-300 ${isRight ? 'bg-red-500 float-right' : 'bg-green-500 float-left'}`} style={{width: `${hpPct}%`}} />
+                    <div className={`h-full transition-all duration-300 ${isRight ? 'bg-red-500 float-right' : 'bg-green-500 float-left'}`} style={{ width: `${hpPct}%` }} />
                 </div>
 
                 <div className="flex items-center gap-2 mt-1">
                     {!isRight && <Zap size={12} className={isReady ? 'text-cyan-400' : 'text-gray-600'} />}
 
                     <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                        <div className={`h-full transition-all duration-100 ${isReady ? 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]' : 'bg-cyan-900'}`} style={{width: `${cooldownPct}%`}} />
+                        <div className={`h-full transition-all duration-100 ${isReady ? 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]' : 'bg-cyan-900'}`} style={{ width: `${cooldownPct}%` }} />
                     </div>
 
                     {isRight && <Zap size={12} className={isReady ? 'text-red-400' : 'text-gray-600'} />}
 
                     <span className={`text-[9px] font-bold ${isReady ? 'text-cyan-300' : 'text-gray-500'}`}>
-                        {isReady ? 'READY' : `${((RIFT_COOLDOWN - elapsed)/1000).toFixed(1)}s`}
+                        {isReady ? 'READY' : `${((RIFT_COOLDOWN - elapsed) / 1000).toFixed(1)}s`}
                     </span>
                 </div>
             </div>
@@ -605,7 +609,7 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, scr
             })}
 
             {player.realm === currentRealm && (
-                <Fighter 
+                <Fighter
                     x={player.x - offsetX}
                     y={player.y}
                     width={player.width}
