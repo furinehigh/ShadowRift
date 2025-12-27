@@ -369,7 +369,7 @@ function PlayerHud({ player, name, level, color, align, isMe }: any) {
     )
 }
 
-function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider, windowWidth, currentRealm }: any) {
+export function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider, windowWidth, currentRealm }: any) {
     if (!active) return null
 
 

@@ -102,7 +102,7 @@ export interface FighterProps {
     y: number,
     width: number,
     height: number,
-    facingRight: number,
+    facingRight: boolean,
     anim: string
     variant?: 'player' | 'grunt' | 'elite' | 'boss'
 }

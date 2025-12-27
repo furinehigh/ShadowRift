@@ -212,3 +212,5 @@ export const generateSkyline = (type: 'normal' | 'rift'): Building[] => {
 
         return buildings
     }
+
+    
