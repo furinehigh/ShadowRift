@@ -2,17 +2,24 @@
 
 import { useGameLoop } from "@/hooks/useGameLoop"
 import { calculateBotInputs } from "@/lib/aiLogic"
-import { generateSkyline, getAnim, updatePhysics, useWindowSize } from "@/lib/game-utils"
+import { generateSkyline, getAnim, playSound, updatePhysics, useWindowSize } from "@/lib/game-utils"
 import { Building, PlayerState } from "@/types/types"
 import { useEffect, useRef, useState } from "react"
 import RealmScene from "./bg/RealmScene"
 import { realms } from "@/lib/realms"
 import { GameView } from "./bg/SplitWorld"
 import Fighter from "./game/Fighter"
+import MobileControls from "./mobile/MobileControls"
+import { useSettings } from "@/context/SettingsContext"
+import { useRealmStore } from "@/store/realmStore"
+import { AnimatePresence } from "framer-motion"
+import PauseMenu from "./modals/PauseMenu"
+import SettingsPage from "./SettingsPage"
 
 
 
-const GRAVITY = 2000
+
+const RIFT_COOLDOWN = 5000
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
 const PLAYER_W = 30
@@ -24,9 +31,15 @@ interface Enemy extends PlayerState {
 }
 
 export default function TrainingArena() {
-    const {width: windowWidth, height: windowHeight} = useWindowSize()
 
-    const [enemies, setEnemies]= useState<Enemy[]>([])
+    const { p1Realm, setP1Realm } = useRealmStore()
+    const { width: windowWidth, height: windowHeight } = useWindowSize()
+    const { keybinds, isEditingHud } = useSettings()
+
+    const [isPaused, setIsPaused] = useState(false)
+    const [showSettings, setShowSettings] = useState(false)
+
+    const [enemies, setEnemies] = useState<Enemy[]>([])
     const [wave, setWave] = useState(1)
 
     const p1 = useRef<PlayerState>({
@@ -35,11 +48,11 @@ export default function TrainingArena() {
 
     const buildings = useRef<Building[]>([])
     const cameraX = useRef(0)
-    const inputs = useRef({left: false, right: false, jump: false, punch: false, kick: false})
+    const inputs = useRef({ left: false, right: false, jump: false, kick: false, punch: false })
 
     useEffect(() => {
         buildings.current = generateSkyline('normal')
-        // spawnWave(1)
+        spawnWave(1)
     })
 
     const spawnWave = (waveNumber: number) => {
@@ -64,7 +77,7 @@ export default function TrainingArena() {
             })
 
 
-            
+
         }
         setEnemies(newEnemies)
     }
@@ -113,7 +126,7 @@ export default function TrainingArena() {
                 if (enemy.y > windowHeight + 200) enemy.isDead = true
                 if (enemy.hp <= 0) enemy.isDead = true
 
-                return {...enemy}
+                return { ...enemy }
             })
 
             return updated
@@ -140,8 +153,78 @@ export default function TrainingArena() {
         }
     }
 
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            const k = e.key.toLowerCase()
+
+            if (k === 'escape') {
+                setIsPaused(prev => !prev)
+            }
+
+            if (k === keybinds.left || k === 'arrowleft') inputs.current.left = true
+            if (k === keybinds.right || k === 'arrowright') inputs.current.right = true
+            if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = true
+            if (k === keybinds.kick) inputs.current.kick = true
+            if (k === keybinds.punch) inputs.current.punch = true
+
+            if (k === keybinds.rift) {
+                handleRiftSwitch()
+            }
+        }
+
+        const onKeyUp = (e: KeyboardEvent) => {
+            const k = e.key.toLowerCase()
+            if (k === keybinds.left || k === 'arrowleft') inputs.current.left = false
+            if (k === keybinds.right || k === 'arrowright') inputs.current.right = false
+            if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = false
+            if (k === keybinds.kick) inputs.current.kick = false
+            if (k === keybinds.punch) inputs.current.punch = false
+        }
+
+
+
+
+        window.addEventListener('keydown', onKeyDown)
+        window.addEventListener('keyup', onKeyUp)
+        return () => {
+            window.removeEventListener('keydown', onKeyDown)
+            window.removeEventListener('keyup', onKeyUp)
+        }
+    }, [keybinds])
+
+    const handleRiftSwitch = () => {
+        const now = Date.now()
+
+        if (now - p1.current.lastRiftSwitch < RIFT_COOLDOWN) return
+
+        p1.current.lastRiftSwitch = now
+        playSound('rift')
+
+        const newRealm = p1.current.realm === 'normal' ? 'rift' : 'normal'
+        p1.current.realm = newRealm
+        p1.current.isClimbing = false
+        setP1Realm(newRealm)
+    }
+
+    const handleExit = () => {
+        window.location.reload()
+    }
+
     return (
-        <div>
+        <div className="w-full h-full relative overflow-hidden bg-white">
+
+            <AnimatePresence>
+                {isPaused && !showSettings && !isEditingHud && (
+                    <PauseMenu onResume={() => setIsPaused(false)} onSettings={() => setShowSettings(true)} onExit={handleExit} isOnline={false} />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showSettings && (
+                    <SettingsPage onClose={() => setShowSettings(false)} />
+                )}
+            </AnimatePresence>
             <RealmScene realm={realms[0]} cameraOffset={cameraX.current} />
 
             <div className="absolute inset-0">
@@ -173,7 +256,23 @@ export default function TrainingArena() {
 
             </div>
 
-            
+            {/* <TrainingHUD wave={wave} enemies={enemies} player={p1.current} /> */}
+            {/* <EnemyIndicators enemies={enemies} player={p1.current} width={windowWidth} height={windowHeight} /> */}
+
+            <MobileControls
+                onJump={() => inputs.current.jump = true}
+                onLeft={(a) => inputs.current.left = a}
+                onRight={(a) => inputs.current.right = a}
+                onAttack={(t: string) => {
+                    if (t === 'KICK') {
+                        inputs.current.kick = true
+                    } else {
+                        inputs.current.punch = true
+                    }
+                }}
+                onPause={() => setIsPaused(true)}
+                onRift={handleRiftSwitch}
+            />
         </div>
     )
 }
