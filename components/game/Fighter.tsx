@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Application, Assets, Container, Ticker } from 'pixi.js'
+import { Application, Assets, ColorMatrixFilter, Container, Ticker } from 'pixi.js'
 import { PixiFactory } from '@md5crypt/dragonbones-pixi'
+import { FighterProps } from '@/types/types'
 
 const CANVAS_SIZE = 400
 const SCALE = 0.02
 
-export default function Fighter({ x, y, width, height, facingRight, anim }: { x: number, y: number, width: number, height: number, facingRight: number, anim: string }) {
+export default function Fighter({ x, y, width, height, facingRight, anim, variant = 'player' }: FighterProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const appRef = useRef<Application | null>(null)
 
@@ -116,6 +117,40 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
 
     useEffect(() => {
         if (!armatureRef.current) return
+        applyVariantStyles(armatureRef.current)
+    }, [variant])
+
+    const applyVariantStyles = (armature: any) => {
+        armature.filters = []
+        armature.tint = 0xFFFFFF
+
+        switch (variant) {
+            case 'player':
+                
+                break;
+            
+            case 'grunt':
+                armature.tint = 0xff8888
+                break
+
+            case 'elite':
+                armature.tint = 0xffd700
+                break
+
+            case 'boss':
+                armature.tint = 0xa020f0
+
+                const filter = new ColorMatrixFilter()
+                filter.brightness(1.1, false)
+                filter.contrast(1.2, false)
+
+                armature.filter = [filter]
+                break
+        }
+    }
+
+    useEffect(() => {
+        if (!armatureRef.current) return
         const currentScaleX = Math.abs(armatureRef.current.scale.x)
         armatureRef.current.scale.x = facingRight ? currentScaleX : -currentScaleX
 
@@ -134,7 +169,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
         if (armature.animation.hasAnimation(animationName)) {
             const oneShotAnims = ['JUMP', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH']
 
-            const attackAnims = ['PUNCH', 'LEG_ATTACK_1']
+            const attackAnims = ['PUNCH', 'LEG_ATTACK_1', 'RUN']
             const playTimes = oneShotAnims.includes(animationName) ? 1: 0
 
             const animationState = armature.animation.fadeIn(animationName, 0.1, playTimes)
@@ -161,7 +196,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
                 height: CANVAS_SIZE,
                 pointerEvents: 'none',
                 overflow: 'visible',
-                zIndex: 10
+                zIndex: variant === 'player' ? 20 : 10
             }}
         />
     )

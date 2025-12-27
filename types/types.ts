@@ -91,3 +91,13 @@ export interface SettingsContextType {
     setEditingHud: (v: boolean) => void
     resetDefaults: () => void
 }
+
+export interface FighterProps { 
+    x: number, 
+    y: number, 
+    width: number, 
+    height: number,
+    facingRight: number, 
+    anim: string
+    variant?: 'player' | 'grunt' | 'elite' | 'boss'
+}
