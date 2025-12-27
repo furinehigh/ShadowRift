@@ -15,6 +15,7 @@ import AuthPage from './AuthPage'
 import { SettingsProvider } from '@/context/SettingsContext'
 import OrientationGuard from './mobile/OrientationGuard'
 import { useGameStore } from '@/store/gameStore'
+import TrainingArena from './TrainingArena'
 
 export default function StartPageWrapper() {
   return (
@@ -67,6 +68,18 @@ function StartPage() {
     return (
       <div className='w-screen h-screen overflow-hidden'>
         <SplitWorld />
+
+        {/* <button className='fixed top-4 right-4 z-60 text-xs text-white/20 hover:text-white' onClick={() => setGameState('menu')}>
+          EXIT
+        </button> */}
+      </div>
+    )
+  }
+
+  if (gameState === 'training') {
+    return (
+      <div className='w-screen h-screen overflow-hidden'>
+        <TrainingArena />
 
         {/* <button className='fixed top-4 right-4 z-60 text-xs text-white/20 hover:text-white' onClick={() => setGameState('menu')}>
           EXIT
@@ -150,9 +163,9 @@ function StartPage() {
           </div>
 
           <div className={`flex gap-4 md:gap-12 items-end justify-center transition-all duration-500 ${isModalOpen ? 'translate-y-20 opacity-0' : 'translate-y-0 opacity-100'}`}>
-            <BottomNavButton label='MULTIPLAYER' delay={0.2} />
-            <BottomNavButton label='FRIENDS' delay={0.3} />
-            <BottomNavButton label='PROFILE' delay={0.2} />
+            <BottomNavButton onClick={() => setGameState('training')} label='TRAINING' delay={0.2} />
+            <BottomNavButton onClick={() => {}} label='FRIENDS' delay={0.3} />
+            <BottomNavButton onClick={() => {}} label='PROFILE' delay={0.2} />
           </div>
         </div>
       )}
@@ -227,7 +240,7 @@ function MenuButton({ icon, label, delay, onClick }: { icon: React.ReactNode, la
   )
 }
 
-function BottomNavButton({ label, delay }: { label: string, delay: number }) {
+function BottomNavButton({ label, delay, onClick }: { label: string, delay: number, onClick: () => void }) {
   return (
     <motion.button
       initial={{ y: 100, opacity: 0 }}
@@ -235,6 +248,7 @@ function BottomNavButton({ label, delay }: { label: string, delay: number }) {
       whileHover={{ y: -5 }}
       whileTap='tap'
       transition={{ delay, type: 'spring' }}
+      onClick={onClick}
       className='flex flex-col items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors w-24'
     >
 

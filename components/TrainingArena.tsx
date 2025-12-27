@@ -53,7 +53,7 @@ export default function TrainingArena() {
     useEffect(() => {
         buildings.current = generateSkyline('normal')
         spawnWave(1)
-    })
+    }, [])
 
     const spawnWave = (waveNumber: number) => {
         const count = 2 + Math.floor(waveNumber * 1.5)
@@ -77,15 +77,48 @@ export default function TrainingArena() {
             })
 
 
-
         }
         setEnemies(newEnemies)
     }
 
     useGameLoop((dt) => {
-        if (!p1.current) return
+        if (!p1.current || isPaused) return
 
-        // handlePlayerInputs(p1.current)
+        p1.current.vx = 0
+
+        if (!p1.current.isClimbing) {
+            if (inputs.current.left){
+                p1.current.vx = -MOVE_SPEED
+                p1.current.facingRight = false
+            }
+
+            if (inputs.current.right) {
+                p1.current.vx = MOVE_SPEED
+                p1.current.facingRight = true
+            }
+            if (inputs.current.jump && p1.current.isGrounded) {
+                p1.current.vy = JUMP_FORCE
+                inputs.current.jump =false
+                playSound('jump')
+            }
+        }
+
+        const now = Date.now()
+        if (now > p1.current.attackUntil) {
+            if (inputs.current.punch) {
+                p1.current.attackUntil = now + 500
+                p1.current.attackAnim = 'PUNCH'
+                inputs.current.punch = false
+
+                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e))
+            } else if (inputs.current.kick) {
+                p1.current.attackUntil = now + 500
+                p1.current.attackAnim = 'LEG_ATTACK_1'
+                inputs.current.kick = false
+                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e))
+            }
+        }
+
         updatePhysics(p1.current, dt, buildings.current, windowHeight)
         cameraX.current = p1.current.x
 

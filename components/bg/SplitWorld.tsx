@@ -416,7 +416,7 @@ export function GameView({ cameraX, player, otherPlayer, buildings, isRift, acti
                 />
             )}
 
-            {otherPlayer.realm === currentRealm && <div style={{
+            {otherPlayer && otherPlayer.realm === currentRealm && <div style={{
                 position: 'absolute',
                 left: otherPlayer.x - offsetX,
                 top: otherPlayer.y,
