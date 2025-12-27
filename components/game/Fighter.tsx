@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react'
 import { Application, Assets, Container, Ticker } from 'pixi.js'
 import { PixiFactory } from '@md5crypt/dragonbones-pixi'
 
+const CANVAS_SIZE = 400
+const SCALE = 0.02
 
 export default function Fighter({ x, y, width, height, facingRight, anim }: { x: number, y: number, width: number, height: number, facingRight: number, anim: string }) {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -24,8 +26,8 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
 
         const init = async () => {
             const app = new Application({
-                width,
-                height,
+                width: CANVAS_SIZE,
+                height: CANVAS_SIZE + 200,
                 backgroundAlpha: 0,
                 antialias: true
             })
@@ -75,10 +77,10 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
                     return
                 }
 
-                armatureDisplay.x = width / 2
-                armatureDisplay.y = height
+                armatureDisplay.x = CANVAS_SIZE / 2
+                armatureDisplay.y = CANVAS_SIZE / 1 + (height / 2) + 15
 
-                armatureDisplay.scale.set(0.02)
+                armatureDisplay.scale.set(SCALE)
 
                 app.stage.addChild(armatureDisplay)
                 armatureRef.current = armatureDisplay
@@ -93,11 +95,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
                 }
 
 
-                if (armatureDisplay.animation.hasAnimation(anim)) {
-                    armatureDisplay.animation.play(anim)
-                } else {
-                    armatureDisplay.animation.play(armatureDisplay.animation.animationNames[0])
-                }
+                armatureDisplay.animation.play('animation0')
             } catch (error) {
                 console.error('Error loading Fighter assets: ', error)
             }
@@ -114,7 +112,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
                 appRef.current = null
             }
         }
-    }, [width, height])
+    }, [])
 
     useEffect(() => {
         if (!armatureRef.current) return
@@ -127,9 +125,27 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
         if (!armatureRef.current) return
 
         const armature = armatureRef.current
+        const animationName = anim
 
-        if (armature.animation.hasAnimation(anim)) {
-            armature.animation.fadeIn(anim, 0.1)
+        if (armature.animation.lastAnimationName === animationName && armature.animation.isPlaying) {
+            return
+        }
+
+        if (armature.animation.hasAnimation(animationName)) {
+            const oneShotAnims = ['JUMP', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH']
+
+            const attackAnims = ['PUNCH', 'LEG_ATTACK_1']
+            const playTimes = oneShotAnims.includes(animationName) ? 1: 0
+
+            const animationState = armature.animation.fadeIn(animationName, 0.1, playTimes)
+
+            if (animationState) {
+                if (attackAnims.includes(animationName)) {
+                    animationState.timeScale = 1.5
+                } else {
+                    animationState.timeScale = 1.0
+                }
+            }
         }
 
     }, [anim])
@@ -139,12 +155,13 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
             ref={containerRef}
             style={{
                 position: 'absolute',
-                left: x,
-                top: y,
-                width,
-                height,
+                left: x - (CANVAS_SIZE / 2) + (width / 2),
+                top: y - (CANVAS_SIZE * 1.03) + (height / 2),
+                width: CANVAS_SIZE,
+                height: CANVAS_SIZE,
                 pointerEvents: 'none',
-                overflow: 'visible'
+                overflow: 'visible',
+                zIndex: 10
             }}
         />
     )

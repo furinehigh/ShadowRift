@@ -3,7 +3,7 @@
 import { useSettings } from "@/context/SettingsContext"
 import { ControlProps } from "@/types/types"
 import { motion } from "framer-motion"
-import { ArrowLeft, ArrowRight, ArrowUp, Check, GripHorizontal, Pause, Radio, Zap } from "lucide-react"
+import { ArrowLeft, ArrowRight, ArrowUp, Check, GripHorizontal, HandFist, Pause, Radio, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 
 interface MobileControlsPage extends ControlProps {
@@ -102,8 +102,13 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
                             <Radio />
                         </button>
 
-                        <button className={btnClass} style={bg} onClick={!isEditingHud ? onAttack : undefined}>
+                        <button className={btnClass} style={bg} onClick={!isEditingHud ? onAttack('KICK') : undefined}>
                             <Zap />
+
+                        </button>
+
+                        <button className={btnClass} style={bg} onClick={!isEditingHud ? onAttack('PUNCH') : undefined}>
+                            <HandFist />
 
                         </button>
 

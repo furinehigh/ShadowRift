@@ -8,8 +8,9 @@ const defaultKeybinds: Keybinds = {
     left: 'a',
     right: 'd',
     jump: ' ',
-    attack: 'k',
-    rift: 'r'
+    punch: 'z',
+    rift: 'r',
+    kick: 'x'
 }
 
 const defaultMobileLayout: MobileLayout = {

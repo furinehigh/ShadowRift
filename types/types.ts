@@ -63,14 +63,15 @@ export type ControlProps = {
     onRight: (active: boolean) => void
 
     onRift: () => void
-    onAttack: ()=> void
+    onAttack: (a: string)=> undefined
 }
 
 export interface Keybinds {
     left: string
     right: string
     jump: string
-    attack: string
+    punch: string
+    kick: string
     rift: string
 }
 

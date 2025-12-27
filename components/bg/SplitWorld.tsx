@@ -20,8 +20,10 @@ const MOVE_SPEED = 450
 const CLIMB_SPEED = 6
 const WALL_SLIDE_SPEED = 50
 const RIFT_COOLDOWN = 5000
-const PLAYER_W = 40
+const PLAYER_W = 30
 const PLAYER_H = 70
+
+const ATTACK_DURATION = 500
 
 
 const playSound = (type: 'jump' | 'rift' | 'land' | 'climb') => {
@@ -55,6 +57,9 @@ function useWindowSize() {
 function getAnim(p: any) {
     if (p.isDead) return 'DEATH'
     if (p.isClimbing) return 'CLIMB'
+    if (Date.now() < p.attackUntil && p.attackAnim) {
+        return p.attackAnim
+    }
     if (!p.isGrounded && p.vy < 0) return "JUMP"
     if (Math.abs(p.vx) > 350) return 'RUN'
     if (Math.abs(p.vx) > 10) return 'WALK'
@@ -65,6 +70,8 @@ interface ExtendedPlayerState extends PlayerState {
     isClimbing: boolean
     climbTargetY: number | null
     climbLockX: number | null
+    attackUntil: number
+    attackAnim: string | null
 }
 
 export default function SplitWorld() {
@@ -132,11 +139,11 @@ export default function SplitWorld() {
 
     // player refs
     const p1 = useRef<ExtendedPlayerState>({
-        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null
+        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null
     })
 
     const p2 = useRef<ExtendedPlayerState>({
-        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null
+        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null
     })
 
     const cameras = useRef({ normal: 100, rift: 600 })
@@ -144,7 +151,7 @@ export default function SplitWorld() {
     const normalBuildings = useRef<Building[]>(generateSkyline('normal'))
     const riftBuildings = useRef<Building[]>(generateSkyline('rift'))
 
-    const inputs = useRef({ left: false, right: false, jump: false, attack: false })
+    const inputs = useRef({ left: false, right: false, jump: false, punch: false, kick: false })
 
 
     const updatePhysics = (p: ExtendedPlayerState, dt: number, buildings: Building[]) => {
@@ -280,6 +287,8 @@ export default function SplitWorld() {
 
         p1.current.vx = 0
 
+        const now = Date.now()
+
         if (!p1.current.isClimbing) {
 
             if (inputs.current.left) {
@@ -308,18 +317,18 @@ export default function SplitWorld() {
         }
 
 
-        if (inputs.current.attack) {
-            const targetArray = p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current
-
-            const attackX = p1.current.facingRight ? p1.current.x + PLAYER_W + 20 : p1.current.x - 20
-
-            const hit = targetArray.find(b => attackX > b.x && attackX < b.x + b.width && Math.abs((windowHeight - b.height) - p1.current.y) < 100)
-
-            if (hit) {
-                hit.shakeUntil = Date.now() + 120
+        if (now > p1.current.attackUntil) {
+            if (inputs.current.punch) {
+                p1.current.attackUntil = now + ATTACK_DURATION
+                p1.current.attackAnim = 'PUNCH'
+                inputs.current.punch = false
+                checkAttackHit(p1.current, 'PUNCH')
+            } else if (inputs.current.kick) {
+                p1.current.attackUntil = now + ATTACK_DURATION
+                p1.current.attackAnim = 'LEG_ATTACK_1'
+                inputs.current.kick = false
+                checkAttackHit(p1.current, 'KICK')
             }
-
-            inputs.current.attack = false
         }
 
         updatePhysics(p1.current, dt, p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current)
@@ -336,6 +345,19 @@ export default function SplitWorld() {
         setTick(t => t + 1)
     })
 
+    const checkAttackHit = (attacker: ExtendedPlayerState, type: string) => {
+        const targetArray = attacker.realm === 'normal' ? normalBuildings.current : riftBuildings.current
+        const range = type === 'KICK' ? 60 : 40
+        const attackX = attacker.facingRight ? attacker.x + PLAYER_W + range : attacker.x - range
+
+        const hit = targetArray.find(b => attackX > b.x && attackX < b.x + b.width && Math.abs((windowHeight - b.height) - attacker.y) < 100)
+
+        if (hit) {
+            hit.shakeUntil = Date.now() + 120
+        }
+
+    }
+
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             const k = e.key.toLowerCase()
@@ -347,7 +369,8 @@ export default function SplitWorld() {
             if (k === keybinds.left || k === 'arrowleft') inputs.current.left = true
             if (k === keybinds.right || k === 'arrowright') inputs.current.right = true
             if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = true
-            if (k === keybinds.attack) inputs.current.attack = true
+            if (k === keybinds.kick) inputs.current.kick = true
+            if (k === keybinds.punch) inputs.current.punch = true
 
             if (k === keybinds.rift) {
                 handleRiftSwitch()
@@ -359,6 +382,8 @@ export default function SplitWorld() {
             if (k === keybinds.left || k === 'arrowleft') inputs.current.left = false
             if (k === keybinds.right || k === 'arrowright') inputs.current.right = false
             if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = false
+            if (k === keybinds.kick) inputs.current.kick = false
+            if (k === keybinds.punch) inputs.current.punch = false
         }
 
 
@@ -482,7 +507,10 @@ export default function SplitWorld() {
                 onLeft={(active) => inputs.current.left = active}
                 onRight={(active) => inputs.current.right = active}
                 onRift={handleRiftSwitch}
-                onAttack={() => inputs.current.attack = true}
+                onAttack={(a: string) => {
+                    if (a === 'KICK') inputs.current.kick = true
+                    if (a === 'PUNCH') inputs.current.punch = true
+                }}
                 onPause={() => setIsPaused(true)}
             />
 
