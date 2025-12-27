@@ -4,14 +4,6 @@ import { useEffect, useRef } from 'react'
 import { Application, Assets, Container, Ticker } from 'pixi.js'
 import { PixiFactory } from '@md5crypt/dragonbones-pixi'
 
-if (typeof Container !== 'undefined') {
-    const proto = Container.prototype as any
-    if (!proto.updateLocalTransform) {
-        proto.updateLocalTransform = function () {
-            return this.updateTransform()
-        }
-    }
-}
 
 export default function Fighter({ x, y, width, height, facingRight, anim }: { x: number, y: number, width: number, height: number, facingRight: number, anim: string }) {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -76,7 +68,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim }: { x:
 
                 }
 
-                const armatureDisplay = factory.buildArmatureDisplay(dbConfig.armatureName, dbConfig.name)
+                const armatureDisplay = factory.buildArmatureDisplay(dbConfig.armatureName)
 
                 if (!armatureDisplay) {
                     console.error(`Failed to build armature "${dbConfig.armatureName}"`)
