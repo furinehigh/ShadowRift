@@ -12,6 +12,7 @@ import { useSettings } from "@/context/SettingsContext"
 import { AnimatePresence } from "framer-motion"
 import PauseMenu from "../modals/PauseMenu"
 import SettingsPage from "../SettingsPage"
+import Fighter from "../game/Fighter"
 
 const GRAVITY = 2000
 const JUMP_FORCE = -850
@@ -20,7 +21,7 @@ const CLIMB_SPEED = 6
 const WALL_SLIDE_SPEED = 50
 const RIFT_COOLDOWN = 5000
 const PLAYER_W = 40
-const PLAYER_H = 60
+const PLAYER_H = 70
 
 
 const playSound = (type: 'jump' | 'rift' | 'land' | 'climb') => {
@@ -49,6 +50,15 @@ function useWindowSize() {
 
     return { ...size, isClient }
 
+}
+
+function getAnim(p: any) {
+    if (p.isDead) return 'DEATH'
+    if (p.isClimbing) return 'CLIMB'
+    if (!p.isGrounded && p.vy < 0) return "JUMP"
+    if (Math.abs(p.vx) > 350) return 'RUN'
+    if (Math.abs(p.vx) > 10) return 'WALK'
+    return 'animation0'
 }
 
 interface ExtendedPlayerState extends PlayerState {
@@ -386,7 +396,7 @@ export default function SplitWorld() {
     if (!isClient) return <div className="w-full h-full bg-black"></div>
 
     return (
-        <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-[#0f0f1a]">
+        <div className="flex w-full h-full  relative overflow-hidden select-none font-mono bg-[white]">
 
             <AnimatePresence>
                 {isPaused && !showSettings && !isEditingHud && (
@@ -574,27 +584,16 @@ function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, scr
                 )
             })}
 
-            {player.realm === currentRealm && <div style={{
-                position: 'absolute',
-                left: player.x - offsetX,
-                top: player.y,
-                width: player.width,
-                height: player.height,
-                backgroundColor: isRift ? '#fff' : '#4b4c9d',
-                boxShadow: isRift ? '0 0 15px white' : 'none',
-                transform: player.isDead ? 'scale(0) rotate(180deg)' : (player.isClimbing ? 'scaleX(0.9)' : 'none'),
-                transition: 'transform 0.25s ease-out'
-            }}>
-                <div className="absolute top-2 right-2 w-2 h-2 bg-white" style={{
-                    right: player.facingRight ? 4 : 'auto',
-                    left: player.facingRight ? 'auto' : 4
-                }} />
-                {player.isClimbing && (
-                    <div className="absolute -top-4 w-full text-center text-[10px] text-white font-bold animate-pulse">
-                        CLIMB!
-                    </div>
-                )}
-            </div>}
+            {player.realm === currentRealm && (
+                <Fighter 
+                    x={player.x - offsetX}
+                    y={player.y}
+                    width={player.width}
+                    height={player.height}
+                    facingRight={player.facingRight}
+                    anim={getAnim(player)}
+                />
+            )}
 
             {otherPlayer.realm === currentRealm && <div style={{
                 position: 'absolute',
