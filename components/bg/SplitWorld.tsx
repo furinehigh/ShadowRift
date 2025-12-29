@@ -4,7 +4,7 @@ import { useRealmStore } from "@/store/realmStore"
 import RealmScene from "./RealmScene"
 import { realms } from "@/lib/realms"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Building, Platform, PlayerState } from "@/types/types"
+import { Building, GameViewProps, Platform, PlayerState } from "@/types/types"
 import { useGameLoop } from "@/hooks/useGameLoop"
 import MobileControls from "../mobile/MobileControls"
 import { Skull, UserIcon, Wifi, Zap } from "lucide-react"
@@ -369,7 +369,7 @@ function PlayerHud({ player, name, level, color, align, isMe }: any) {
     )
 }
 
-export function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider, windowWidth, currentRealm }: any) {
+export function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider, windowWidth, currentRealm, children }: GameViewProps) {
     if (!active) return null
 
 
@@ -404,6 +404,8 @@ export function GameView({ cameraX, player, otherPlayer, buildings, isRift, acti
                     </div>
                 )
             })}
+
+            {children}
 
             {player.realm === currentRealm && (
                 <Fighter

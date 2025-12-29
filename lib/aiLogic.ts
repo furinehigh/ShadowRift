@@ -14,6 +14,11 @@ export const calculateBotInputs = (
 
     if (me.isDead || target.isDead) return inputs
 
+    // slow downnn
+    if (me.attackUntil && Date.now() < me.attackUntil) {
+        return inputs
+    }
+
     const dx = target.x - me.x
     const dy = target.y - me.y
     const distance = Math.sqrt(dx * dx + dy * dy)
@@ -21,22 +26,25 @@ export const calculateBotInputs = (
     if (distance > SIGHT_RANGE) return inputs
 
     if (Math.abs(dx) < ATTACK_RANGE && Math.abs(dy) < 50) {
-        if (Math.random() > 0.95) inputs.punch = true
-        else if (Math.random() > 0.95) inputs.kick = true
+        if (me.isGrounded) {
 
-        if (dx > 0 && !me.facingRight) inputs.right = true
-        if (dx < 0 && me.facingRight) inputs.left = true
+            if (Math.random() > 0.95) inputs.punch = true
+            else if (Math.random() > 0.95) inputs.kick = true
+            
+        }
+        if (dx > 10 && !me.facingRight) inputs.right = true
+        if (dx < -10 && me.facingRight) inputs.left = true
 
         return inputs
     }
 
-    const isStuck = me.vx === 0 && !me.isGrounded && !me.isClimbing
+    // const isStuck = me.vx === 0 && !me.isGrounded && !me.isClimbing
 
-    if (dx > 0) {
+    if (dx > 20) {
         inputs.right = true
         inputs.left = false
 
-    } else {
+    } else if (dx < -20) {
         inputs.left = true
         inputs.right = false
     }

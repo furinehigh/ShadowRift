@@ -87,6 +87,8 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
 
     const floorY = windowHeight
 
+    
+
     p.x += p.vx * dt
     p.vy += GRAVITY * dt
     p.y += p.vy * dt
@@ -190,9 +192,22 @@ export const generateSkyline = (type: 'normal' | 'rift'): Building[] => {
         let currentX = 0
         const count = 50
 
+
+        buildings.push({
+            id: `start-plat`,
+            x: 100,
+            y: 0,
+            width: 400,
+            height: 200,
+            type,
+            color: type === "rift" ? '#4a1d96' : '#2d3748'
+        })
+
+        currentX = 500
+
         for (let i = 0; i < count; i++) {
             const isGap = Math.random() > 0.8
-            const gapSize = isGap ? 100 + Math.random() * 100 : 0
+            const gapSize = isGap ? 40 + Math.random() * 40 : 0
 
             if (isGap) {
                 currentX += gapSize

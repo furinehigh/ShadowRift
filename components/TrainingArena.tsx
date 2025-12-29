@@ -27,9 +27,14 @@ const MOVE_SPEED = 450
 const PLAYER_W = 30
 const PLAYER_H = 70
 
+const ATTACK_DAMAGE = 10
+const ENEMY_HP_VISIBLE_TIME = 6000
+
 interface Enemy extends PlayerState {
     id: string
     variant: 'grunt' | 'elite' | 'boss'
+    maxHp: number
+    lastHitTime: number
 }
 
 export default function TrainingArena() {
@@ -43,6 +48,8 @@ export default function TrainingArena() {
 
     const [enemies, setEnemies] = useState<Enemy[]>([])
     const [wave, setWave] = useState(1)
+
+    const [playerHp, setPlayerHp] = useState(100)
 
     const p1 = useRef<PlayerState>({
         x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0
@@ -70,8 +77,10 @@ export default function TrainingArena() {
             const targetBuilding = validSpawnPoints[i % validSpawnPoints.length] || buildings.current[0]
 
             const spawnX = targetBuilding.x + (targetBuilding.width / 2) - (PLAYER_W / 2)
-            const spawnY = windowHeight - targetBuilding.height - PLAYER_H - 10
+            const groundY = windowHeight - targetBuilding.height
+            const spawnY = groundY - PLAYER_H
 
+            const maxHp = isBoss ? 500 : (isElite ? 200 : 100)
             newEnemies.push({
                 id: `enemy-${waveNumber}-${i}`,
                 x: spawnX,
@@ -81,7 +90,7 @@ export default function TrainingArena() {
                 width: PLAYER_W,
                 height: PLAYER_H,
                 isGrounded: false,
-                isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: isBoss ? 500 : (isElite ? 200 : 100), isClimbing: false, climbLockX: null, climbTargetY: null, attackAnim: null, attackUntil: 0,
+                isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: maxHp, maxHp, lastHitTime: 0, isClimbing: false, climbLockX: null, climbTargetY: null, attackAnim: null, attackUntil: 0,
                 variant: isBoss ? 'boss' : (isElite ? 'elite' : 'grunt')
             })
 
@@ -119,12 +128,12 @@ export default function TrainingArena() {
                 p1.current.attackAnim = 'PUNCH'
                 inputs.current.punch = false
 
-                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e))
+                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false))
             } else if (inputs.current.kick) {
                 p1.current.attackUntil = now + 500
                 p1.current.attackAnim = 'LEG_ATTACK_1'
                 inputs.current.kick = false
-                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e))
+                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false))
             }
         }
 
@@ -159,7 +168,7 @@ export default function TrainingArena() {
                         enemy.attackUntil = now + 500
                         enemy.attackAnim = 'PUNCH'
 
-                        checkAttackHit(enemy, p1.current)
+                        checkAttackHit(enemy, p1.current, true)
                     }
                 }
 
@@ -179,9 +188,13 @@ export default function TrainingArena() {
             spawnWave(wave + 1)
         }
 
+        if (p1.current.hp <= 0 && !p1.current.isDead) {
+            p1.current.isDead = true
+        }
+
     })
 
-    const checkAttackHit = (attacker: any, victim: any) => {
+    const checkAttackHit = (attacker: any, victim: any, isVictimPlayer: boolean) => {
         const range = 60
         const attackX = attacker.facingRight ? attacker.x + PLAYER_W + range : attacker.x - range
 
@@ -190,8 +203,14 @@ export default function TrainingArena() {
             attackX < victim.x + victim.width &&
             Math.abs(attacker.y - victim.y) < 50
         ) {
-            victim.hp -= 10
+            victim.hp -= ATTACK_DAMAGE
             victim.vx = attacker.facingRight ? 300 : -300
+
+            if (isVictimPlayer) {
+                setPlayerHp(victim.hp)
+            } else {
+                victim.lastHitTime = Date.now()
+            }
         }
     }
 
@@ -253,6 +272,8 @@ export default function TrainingArena() {
         window.location.reload()
     }
 
+    const playerForHud = {...p1.current, hp: playerHp}
+
     return (
         <div className="w-full h-full relative overflow-hidden bg-white">
 
@@ -281,24 +302,40 @@ export default function TrainingArena() {
                     windowWidth={windowWidth}
                     currentRealm='normal'
                 >
-                    {enemies.filter(e => !e.isDead).map(enemy => (
-                        <Fighter
-                            key={enemy.id}
-                            x={enemy.x - (cameraX.current - windowWidth / 2)}
-                            y={enemy.y}
-                            width={enemy.width}
-                            height={enemy.width}
-                            facingRight={enemy.facingRight}
-                            anim={getAnim(enemy)}
-                            variant={enemy.variant}
-                        />
-                    ))}
+                    {enemies.filter(e => !e.isDead).map(enemy => {
+                        const showHp = Date.now() - enemy.lastHitTime < ENEMY_HP_VISIBLE_TIME
+
+                        return (
+                            <div className="relative" key={enemy.id}>
+                                {showHp && (
+                                    <div className="absolute z-20" style={{left: enemy.x - (cameraX.current - windowWidth / 2) + (PLAYER_W / 2) - 20,
+                                        top: enemy.y - 15,
+                                        width: '40px',
+                                        height: '6px'
+                                    }}>
+                                        <div className="w-full h-full bg-gray-900 border border-black relative">
+                                            <div className="h-full bg-red-600 transition-all duration-100" style={{width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%`}} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <Fighter
+                                    x={enemy.x - (cameraX.current - windowWidth / 2)}
+                                    y={enemy.y}
+                                    width={enemy.width}
+                                    height={enemy.height}
+                                    facingRight={enemy.facingRight}
+                                    anim={getAnim(enemy)}
+                                    variant={enemy.variant}
+                                />
+                            </div>
+                    )})}
                 </GameView>
 
 
             </div>
 
-            <TrainingHUD wave={wave} enemies={enemies} player={p1.current} />
+            <TrainingHUD wave={wave} enemies={enemies} player={playerForHud} />
             <EnemyIndicators enemies={enemies} player={p1.current} width={windowWidth} height={windowHeight} />
 
             <MobileControls

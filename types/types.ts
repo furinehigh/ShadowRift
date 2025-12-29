@@ -1,3 +1,5 @@
+import { ReactNode } from "react"
+
 export type GameState = 'initializing' | 'auth' | 'loading' | 'menu' | 'playing' | 'training'
 
 export type RealmConfig = {
@@ -127,5 +129,19 @@ export interface TrainingHUDProps {
     enemies: Enemy[]
     player: {
         hp: number
+        lastRiftSwitch: number
     }
+}
+
+export interface GameViewProps {
+    cameraX: number
+    player: PlayerState
+    otherPlayer: PlayerState | null
+    buildings: Building[]
+    isRift: boolean
+    active: boolean
+    screenWidthDivider: number
+    windowWidth: number
+    currentRealm: string
+    children?: ReactNode
 }

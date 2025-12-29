@@ -144,7 +144,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim, varian
                 filter.brightness(1.1, false)
                 filter.contrast(1.2, false)
 
-                armature.filter = [filter]
+                armature.filters = [filter]
                 break
         }
     }
