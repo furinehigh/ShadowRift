@@ -53,7 +53,7 @@ export function getAnim(p: any) {
 }
 
 
-const getSafeSpawn = (buildings: Building[], floorY: number) => {
+export const getSafeSpawn = (buildings: Building[], floorY: number) => {
     const safe = buildings.filter(b => b.width > PLAYER_W + 20).map(b => ({
         x: b.x + b.width / 2 - PLAYER_W / 2,
         y: floorY - b.height - PLAYER_H
@@ -64,19 +64,24 @@ const getSafeSpawn = (buildings: Building[], floorY: number) => {
 
 export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[], windowHeight: number) => {
     if (p.isDead) return
+    
+    const floorY = windowHeight
+
+    const prevX = p.x
+    const prevY = p.y
 
     if (p.isClimbing && p.climbTargetY !== null) {
-        console.log('player is climbing', p.isClimbing)
+        // console.log('player is climbing', p.isClimbing)
 
         p.y += (p.climbTargetY - p.y) * CLIMB_SPEED * dt
 
         if (Math.abs(p.y - p.climbTargetY!) < 2) {
-            p.y = p.climbTargetY!
+            p.y = p.climbTargetY
 
+            
+            p.vy = 0
             p.isClimbing = false
             p.isGrounded = true
-
-            p.vy = 0
             p.climbTargetY = null
 
             p.climbLockX = null
@@ -85,20 +90,15 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
         return
     }
 
-    const floorY = windowHeight
-
-    
 
     p.x += p.vx * dt
-    p.vy += GRAVITY * dt
-    p.y += p.vy * dt
 
     let touchingWall = false
 
     for (const b of buildings) {
         const bTop = floorY - b.height
 
-        const overlap = p.x < b.x + b.width && p.x + p.width > b.x && p.y + p.height > bTop
+        const overlap = p.x < b.x + b.width && p.x + p.width > b.x && p.y + p.height > bTop && p.y < floorY
 
         if (!overlap) continue
 
@@ -129,7 +129,7 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
             return
         }
 
-        if (p.y + p.height > bTop + 10 && (nearLeftEdge || nearRightEdge)) {
+        if ( (nearLeftEdge || nearRightEdge)) {
 
             touchingWall = true
             p.vx = 0
@@ -138,9 +138,12 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
 
     }
 
+    p.vy += GRAVITY * dt
+    
     if (touchingWall && p.vy > WALL_SLIDE_SPEED) {
         p.vy = WALL_SLIDE_SPEED
     }
+    p.y += p.vy * dt
 
     // landing on bulding ground
     p.isGrounded = false
@@ -151,8 +154,8 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
 
         if (p.x + p.width > b.x + 2 &&
             p.x < b.x + b.width - 2 &&
+            prevY + p.height <= bTop &&
             p.y + p.height >= bTop &&
-            p.y + p.height < bTop + 40 &&
             p.vy >= 0
         ) {
 
@@ -163,11 +166,11 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
         }
     }
 
-    if (p.y + p.height >= floorY && p.vy > 0) {
-        p.y = floorY - p.height
-        p.vy = 0
-        p.isGrounded = true
-    }
+    // if (p.y + p.height >= floorY && p.vy > 0) {
+    //     p.y = floorY - p.height
+    //     p.vy = 0
+    //     p.isGrounded = true
+    // }
 
     if (p.y > floorY + 200) {
         p.isDead = true

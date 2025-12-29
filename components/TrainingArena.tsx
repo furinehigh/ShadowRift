@@ -2,7 +2,7 @@
 
 import { useGameLoop } from "@/hooks/useGameLoop"
 import { calculateBotInputs } from "@/lib/aiLogic"
-import { generateSkyline, getAnim, playSound, updatePhysics, useWindowSize } from "@/lib/game-utils"
+import { generateSkyline, getAnim, getSafeSpawn, playSound, updatePhysics, useWindowSize } from "@/lib/game-utils"
 import { Building, PlayerState } from "@/types/types"
 import { useEffect, useRef, useState } from "react"
 import RealmScene from "./bg/RealmScene"
@@ -29,6 +29,9 @@ const PLAYER_H = 70
 
 const ATTACK_DAMAGE = 10
 const ENEMY_HP_VISIBLE_TIME = 6000
+
+const RESPAWN_DELAY = 900
+
 
 interface Enemy extends PlayerState {
     id: string
@@ -101,6 +104,8 @@ export default function TrainingArena() {
 
     useGameLoop((dt) => {
         if (!p1.current || isPaused) return
+
+        if (p1.current.isDead) return
 
         p1.current.vx = 0
 
@@ -194,23 +199,62 @@ export default function TrainingArena() {
 
     })
 
-    const checkAttackHit = (attacker: any, victim: any, isVictimPlayer: boolean) => {
-        const range = 60
-        const attackX = attacker.facingRight ? attacker.x + PLAYER_W + range : attacker.x - range
+    const respawnPlayer = (p: PlayerState, buildings: Building[], floorY: number) => {
+    p.isDead = true
 
-        if (
-            attackX > victim.x &&
-            attackX < victim.x + victim.width &&
-            Math.abs(attacker.y - victim.y) < 50
-        ) {
-            victim.hp -= ATTACK_DAMAGE
-            victim.vx = attacker.facingRight ? 300 : -300
+    setTimeout(() => {
+        const spawn = getSafeSpawn(buildings, floorY)
+
+        p.x = spawn.x
+        p.y = spawn.y
+        p.vx = 0
+        p.vy = 0
+
+        p.hp = 100
+        setPlayerHp(100)
+        p.isDead = false
+        p.isClimbing = false
+        p.isGrounded = false
+
+        playSound('rift')
+    }, RESPAWN_DELAY)
+}
+
+
+    const checkAttackHit = (attacker: any, victim: any, isVictimPlayer: boolean) => {
+        if (victim.isDead) return
+        const range = 60
+        const hitbox = attacker.facingRight ? {x: attacker.x + attacker.width, y: attacker.y, width: range, height: attacker.height } : {x: attacker.x - range, y: attacker.y, width: range, height: attacker.height}
+
+        const victimBox = {
+            x: victim.x,
+            y: victim.y,
+            width: victim.width,
+            height: victim.height
+        }
+        
+        const overlap = hitbox.x < victimBox.x + victimBox.width && hitbox.x + hitbox.width > victimBox.x && hitbox.y < victimBox.y + victimBox.height && hitbox.y + hitbox.height > victimBox.y
+
+        if (!overlap) return
+
+        victim.hp -= ATTACK_DAMAGE
+        victim.vx = attacker.facingRight ? 300 : -300
+
+        if (victim.hp <=0 ){
+            victim.hp = 0
+            victim.isDead = true
 
             if (isVictimPlayer) {
-                setPlayerHp(victim.hp)
-            } else {
-                victim.lastHitTime = Date.now()
+                respawnPlayer(victim, buildings.current, windowHeight)
             }
+
+            return
+        }
+
+        if (isVictimPlayer) {
+            setPlayerHp(victim.hp)
+        } else {
+            victim.lastHitTime = Date.now()
         }
     }
 
