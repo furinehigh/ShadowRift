@@ -388,11 +388,7 @@ export function GameView({ cameraX, player, otherPlayer, buildings, isRift, acti
                         left,
                         width: b.width,
                         height: b.height,
-                        backgroundColor: isRift ? '#1a0b2e' : '#0f0f1a',
-                        borderTop: `4px solid ${b.color}`,
-                        borderLeft: '1px solid rgba(255,255,255,0.1)',
-                        borderRight: '1px solid rgba(255,255,255,0.1)',
-                        boxShadow: isRift ? `0 0 20px ${b.color}40` : 'none',
+                        backgroundColor: isRift ? '#1a0b2e' : '#0f0f1a'
                     }} >
                         <div>
                             {Array.from({ length: Math.floor(b.height / 30) }).map((_, i) => (

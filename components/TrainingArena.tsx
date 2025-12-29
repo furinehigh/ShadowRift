@@ -20,7 +20,11 @@ import EnemyIndicators from "./game/EnemyIndicators"
 
 
 
-
+const ENEMY_SPEED = {
+    grunt: 240,
+    elite: 300,
+    boss: 350
+}
 const RIFT_COOLDOWN = 5000
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
@@ -153,12 +157,14 @@ export default function TrainingArena() {
 
                 enemy.vx = 0
 
+                const speed = ENEMY_SPEED[enemy.variant] || 250
+
                 if (botInputs.left) {
-                    enemy.vx = -MOVE_SPEED
+                    enemy.vx = -speed
                     enemy.facingRight = false
                 }
                 if (botInputs.right) {
-                    enemy.vx = MOVE_SPEED
+                    enemy.vx = speed
                     enemy.facingRight = true
 
                 }

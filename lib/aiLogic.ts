@@ -2,7 +2,8 @@ import { BotInputs, Building, PlayerState } from "@/types/types"
 
 
 const SIGHT_RANGE = 800
-const ATTACK_RANGE = 60
+const ATTACK_RANGE = 40
+const ATTACK_COOLDOWN = 1000
 
 export const calculateBotInputs = (
     me: PlayerState,
@@ -28,8 +29,8 @@ export const calculateBotInputs = (
     if (Math.abs(dx) < ATTACK_RANGE && Math.abs(dy) < 50) {
         if (me.isGrounded) {
 
-            if (Math.random() > 0.95) inputs.punch = true
-            else if (Math.random() > 0.95) inputs.kick = true
+            if (Math.random() > 0.99) inputs.punch = true
+            else if (Math.random() > 0.99) inputs.kick = true
             
         }
         if (dx > 10 && !me.facingRight) inputs.right = true
@@ -40,13 +41,11 @@ export const calculateBotInputs = (
 
     // const isStuck = me.vx === 0 && !me.isGrounded && !me.isClimbing
 
-    if (dx > 20) {
+    if (dx > 30) {
         inputs.right = true
-        inputs.left = false
 
-    } else if (dx < -20) {
+    } else if (dx < -30) {
         inputs.left = true
-        inputs.right = false
     }
 
     // env awareness (jump/climb)
@@ -55,18 +54,28 @@ export const calculateBotInputs = (
     const wallAhead = buildings.some(b => lookAheadX > b.x && lookAheadX < b.x + b.width && me.y + me.height > window.innerHeight - b.height)
 
 
-    const groundBelowAhead = buildings.some(b => lookAheadX > b.x && lookAheadX < b.x + b.width)
+    const floorY = window.innerHeight
+
+    const platformAhead = buildings.some(b => {
+        const top = floorY - b.height
+
+        const withinX = lookAheadX > b.x && lookAheadX < b.x + b.width
+
+        const nearSameHeight = Math.abs((me.y + me.height) - top) < 25
+
+        return withinX && nearSameHeight
+    })
 
     if (me.isGrounded) {
-        if (!groundBelowAhead) {
+        if (!platformAhead) {
             inputs.jump = true
             
         }
-        else if (wallAhead && dy < -50) {
+        else if (wallAhead && dy > 50) {
             inputs.jump = true
 
         }
-        else if (Math.random() > 0.99) {
+        else if (Math.random() > 0.995) {
             inputs.jump = true
         }
     }

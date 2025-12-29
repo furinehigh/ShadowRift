@@ -26,11 +26,15 @@ export default function Fighter({ x, y, width, height, facingRight, anim, varian
         let disposed = false
 
         const init = async () => {
+            if (appRef.current) return
             const app = new Application({
                 width: CANVAS_SIZE,
                 height: CANVAS_SIZE + 200,
                 backgroundAlpha: 0,
-                antialias: true
+                backgroundColor: 0x000000,
+                antialias: true,
+                clearBeforeRender: true,
+                premultipliedAlpha: true
             })
 
             if (disposed) {
@@ -107,7 +111,10 @@ export default function Fighter({ x, y, width, height, facingRight, anim, varian
 
         return () => {
             disposed = true
-            armatureRef.current = null
+            if (armatureRef.current) {
+                armatureRef.current.destroy(true)
+                armatureRef.current = null
+            }
             if (appRef.current) {
                 appRef.current.destroy(true)
                 appRef.current = null
@@ -122,23 +129,22 @@ export default function Fighter({ x, y, width, height, facingRight, anim, varian
 
     const applyVariantStyles = (armature: any) => {
         armature.filters = []
-        armature.tint = 0xFFFFFF
 
         switch (variant) {
             case 'player':
-                
+                armature.tint = 0xFFFFFF
                 break;
             
             case 'grunt':
-                armature.tint = 0xff8888
+                armature.tint = 0xFF7777
                 break
 
             case 'elite':
-                armature.tint = 0xffd700
+                armature.tint = 0xFFD700
                 break
 
             case 'boss':
-                armature.tint = 0xa020f0
+                armature.tint = 0xAA20FF
 
                 const filter = new ColorMatrixFilter()
                 filter.brightness(1.1, false)
