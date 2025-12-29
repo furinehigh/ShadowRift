@@ -15,6 +15,8 @@ import { useRealmStore } from "@/store/realmStore"
 import { AnimatePresence } from "framer-motion"
 import PauseMenu from "./modals/PauseMenu"
 import SettingsPage from "./SettingsPage"
+import TrainingHUD from "./game/TrainingHud"
+import EnemyIndicators from "./game/EnemyIndicators"
 
 
 
@@ -59,14 +61,21 @@ export default function TrainingArena() {
         const count = 2 + Math.floor(waveNumber * 1.5)
         const newEnemies: Enemy[] = []
 
+        const validSpawnPoints = buildings.current.filter(b => b.x > 400 && b.width > 50)
+
         for (let i = 0; i < count; i++) {
             const isBoss = i === count - 1 && waveNumber % 3 === 0
             const isElite = Math.random() > 0.7
 
+            const targetBuilding = validSpawnPoints[i % validSpawnPoints.length] || buildings.current[0]
+
+            const spawnX = targetBuilding.x + (targetBuilding.width / 2) - (PLAYER_W / 2)
+            const spawnY = windowHeight - targetBuilding.height - PLAYER_H - 10
+
             newEnemies.push({
                 id: `enemy-${waveNumber}-${i}`,
-                x: 800 + (i * 100),
-                y: 0,
+                x: spawnX,
+                y: spawnY,
                 vx: 0,
                 vy: 0,
                 width: PLAYER_W,
@@ -289,8 +298,8 @@ export default function TrainingArena() {
 
             </div>
 
-            {/* <TrainingHUD wave={wave} enemies={enemies} player={p1.current} /> */}
-            {/* <EnemyIndicators enemies={enemies} player={p1.current} width={windowWidth} height={windowHeight} /> */}
+            <TrainingHUD wave={wave} enemies={enemies} player={p1.current} />
+            <EnemyIndicators enemies={enemies} player={p1.current} width={windowWidth} height={windowHeight} />
 
             <MobileControls
                 onJump={() => inputs.current.jump = true}

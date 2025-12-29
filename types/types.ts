@@ -114,3 +114,18 @@ export interface BotInputs {
     punch: boolean
     kick: boolean
 }
+
+export interface Enemy {
+    id: string
+    hp: number
+    variant: 'grunt' | 'elite' | 'boss'
+    isDead: boolean
+}
+
+export interface TrainingHUDProps {
+    wave: number
+    enemies: Enemy[]
+    player: {
+        hp: number
+    }
+}

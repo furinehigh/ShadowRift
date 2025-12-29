@@ -161,6 +161,12 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
         }
     }
 
+    if (p.y + p.height >= floorY && p.vy > 0) {
+        p.y = floorY - p.height
+        p.vy = 0
+        p.isGrounded = true
+    }
+
     if (p.y > floorY + 200) {
         p.isDead = true
 

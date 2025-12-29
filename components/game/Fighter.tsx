@@ -48,7 +48,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim, varian
 
             const bundleId = 'fighter-bundle'
 
-            if (!Assets.cache.has(bundleId)) {
+            if (!Assets.resolver.hasBundle(bundleId)) {
                 Assets.addBundle(bundleId, {
                     ske: dbConfig.ske,
                     tex: dbConfig.tex,
