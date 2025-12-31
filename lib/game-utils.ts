@@ -172,22 +172,22 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
     //     p.isGrounded = true
     // }
 
-    if (p.y > floorY + 200) {
-        p.isDead = true
+    // if (p.y > floorY + 200) {
+    //     p.isDead = true
 
 
-        setTimeout(() => {
-            const spawn = getSafeSpawn(buildings, floorY)
+    //     setTimeout(() => {
+    //         const spawn = getSafeSpawn(buildings, floorY)
 
-            p.x = spawn.x
-            p.y = spawn.y
-            p.vy = 0
-            p.vx = 0
-            p.isDead = false
-            p.isClimbing = false
-            playSound('rift')
-        }, 300)
-    }
+    //         p.x = spawn.x
+    //         p.y = spawn.y
+    //         p.vy = 0
+    //         p.vx = 0
+    //         p.isDead = false
+    //         p.isClimbing = false
+    //         playSound('rift')
+    //     }, 300)
+    // }
 }
 
 export const generateSkyline = (type: 'normal' | 'rift'): Building[] => {

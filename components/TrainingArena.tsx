@@ -12,11 +12,12 @@ import Fighter from "./game/Fighter"
 import MobileControls from "./mobile/MobileControls"
 import { useSettings } from "@/context/SettingsContext"
 import { useRealmStore } from "@/store/realmStore"
-import { AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import PauseMenu from "./modals/PauseMenu"
 import SettingsPage from "./SettingsPage"
 import TrainingHUD from "./game/TrainingHud"
 import EnemyIndicators from "./game/EnemyIndicators"
+import { Skull, Target, Timer, Trophy } from "lucide-react"
 
 
 
@@ -25,16 +26,39 @@ const ENEMY_SPEED = {
     elite: 300,
     boss: 350
 }
+
+const SCORE_VALUES = {
+    grunt: 100,
+    elite: 300,
+    boss: 1000
+}
+
+const ENEMY_ATTACK_DAMAGE = {
+    grunt: {
+        kick: 2,
+        punch: 1
+    },
+    elite: {
+        kick: 3,
+        punch: 2
+    },
+    boss: {
+        kick: 6,
+        punch: 4
+    }
+}
+
 const RIFT_COOLDOWN = 5000
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
 const PLAYER_W = 30
 const PLAYER_H = 70
 
-const ATTACK_DAMAGE = 10
+const PLAYER_ATTACK_DAMAGE = {
+    kick: 10,
+    punch: 8
+}
 const ENEMY_HP_VISIBLE_TIME = 6000
-
-const RESPAWN_DELAY = 900
 
 
 interface Enemy extends PlayerState {
@@ -42,6 +66,11 @@ interface Enemy extends PlayerState {
     variant: 'grunt' | 'elite' | 'boss'
     maxHp: number
     lastHitTime: number
+}
+
+interface HighScore {
+    score: number
+    date: string
 }
 
 export default function TrainingArena() {
@@ -58,6 +87,13 @@ export default function TrainingArena() {
 
     const [playerHp, setPlayerHp] = useState(100)
 
+    const [score, setScore] = useState(0)
+    const [kills, setKills] = useState(0)
+    const [isGameOver, setIsGameOver] = useState(false)
+
+    const [respawnTimer, setRespawnTimer] = useState(5)
+    const [highScores, setHighScores] = useState<HighScore[]>([])
+
     const p1 = useRef<PlayerState>({
         x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0
     })
@@ -69,7 +105,72 @@ export default function TrainingArena() {
     useEffect(() => {
         buildings.current = generateSkyline('normal')
         spawnWave(1)
+        loadHighScore()
     }, [])
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout
+        if (isGameOver && respawnTimer > 0) {
+            interval = setInterval(() => {
+                setRespawnTimer(prev => prev - 1)
+            }, 1000)
+        } else if (isGameOver && respawnTimer === 0) {
+            resetGame()
+        }
+
+        return () => clearInterval(interval)
+    }, [isGameOver, respawnTimer])
+
+    const loadHighScore = () => {
+        const stored = localStorage.getItem('tranining_highscores')
+        if (stored) {
+            setHighScores(JSON.parse(stored))
+        }
+    }
+
+    const saveHighScore = (finalScore: number) => {
+        const newScore = { score: finalScore, date: new Date().toLocaleDateString() }
+        const updated = [...highScores, newScore].sort((a, b) => b.score - a.score).slice(0, 5)
+
+        setHighScores(updated)
+        localStorage.setItem('training_highscores', JSON.stringify(updated))
+    }
+
+
+    const resetGame = () => {
+        setIsGameOver(false)
+        setRespawnTimer(5)
+        setScore(0)
+        setKills(0)
+        setWave(1)
+        setPlayerHp(100)
+
+        if (p1.current) {
+            const spawn = getSafeSpawn(buildings.current, windowHeight)
+
+            p1.current.x = spawn.x
+            p1.current.y = spawn.y
+            p1.current.vx = 0
+            p1.current.vy = 0
+            p1.current.hp = 100
+            p1.current.isDead = false
+            p1.current.isClimbing = false
+            p1.current.realm = 'normal'
+            setP1Realm('normal')
+        }
+
+        spawnWave(1)
+    }
+
+    const handlePlayerDeath = () => {
+        if (isGameOver) return
+
+        playSound('death')
+        p1.current.isDead = true
+        setIsGameOver(true)
+        setRespawnTimer(5)
+        saveHighScore(score)
+    }
 
     const spawnWave = (waveNumber: number) => {
         const count = 2 + Math.floor(waveNumber * 1.5)
@@ -114,7 +215,7 @@ export default function TrainingArena() {
         p1.current.vx = 0
 
         if (!p1.current.isClimbing) {
-            if (inputs.current.left){
+            if (inputs.current.left) {
                 p1.current.vx = -MOVE_SPEED
                 p1.current.facingRight = false
             }
@@ -125,7 +226,7 @@ export default function TrainingArena() {
             }
             if (inputs.current.jump && p1.current.isGrounded) {
                 p1.current.vy = JUMP_FORCE
-                inputs.current.jump =false
+                inputs.current.jump = false
                 playSound('jump')
             }
         }
@@ -137,12 +238,12 @@ export default function TrainingArena() {
                 p1.current.attackAnim = 'PUNCH'
                 inputs.current.punch = false
 
-                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false))
+                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false, 'punch'))
             } else if (inputs.current.kick) {
                 p1.current.attackUntil = now + 500
                 p1.current.attackAnim = 'LEG_ATTACK_1'
                 inputs.current.kick = false
-                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false))
+                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false, 'kick'))
             }
         }
 
@@ -179,7 +280,13 @@ export default function TrainingArena() {
                         enemy.attackUntil = now + 500
                         enemy.attackAnim = 'PUNCH'
 
-                        checkAttackHit(enemy, p1.current, true)
+                        checkAttackHit(enemy, p1.current, true, 'punch')
+                    } else if (botInputs.kick){
+                        enemy.attackUntil = now + 500
+                        enemy.attackAnim = 'LEG_ATTACK_1'
+
+                        checkAttackHit(enemy, p1.current, true, 'kick')
+
                     }
                 }
 
@@ -199,38 +306,38 @@ export default function TrainingArena() {
             spawnWave(wave + 1)
         }
 
-        if (p1.current.hp <= 0 && !p1.current.isDead) {
-            p1.current.isDead = true
+        if ((p1.current.hp <= 0 || p1.current.y > windowHeight + 200) && !p1.current.isDead) {
+            handlePlayerDeath()
         }
 
     })
 
-    const respawnPlayer = (p: PlayerState, buildings: Building[], floorY: number) => {
-    p.isDead = true
+    // const respawnPlayer = (p: PlayerState, buildings: Building[], floorY: number) => {
+    //     p.isDead = true
 
-    setTimeout(() => {
-        const spawn = getSafeSpawn(buildings, floorY)
+    //     setTimeout(() => {
+    //         const spawn = getSafeSpawn(buildings, floorY)
 
-        p.x = spawn.x
-        p.y = spawn.y
-        p.vx = 0
-        p.vy = 0
+    //         p.x = spawn.x
+    //         p.y = spawn.y
+    //         p.vx = 0
+    //         p.vy = 0
 
-        p.hp = 100
-        setPlayerHp(100)
-        p.isDead = false
-        p.isClimbing = false
-        p.isGrounded = false
+    //         p.hp = 100
+    //         setPlayerHp(100)
+    //         p.isDead = false
+    //         p.isClimbing = false
+    //         p.isGrounded = false
 
-        playSound('rift')
-    }, RESPAWN_DELAY)
-}
+    //         playSound('rift')
+    //     }, RESPAWN_DELAY)
+    // }
 
 
-    const checkAttackHit = (attacker: any, victim: any, isVictimPlayer: boolean) => {
-        if (victim.isDead) return
+    const checkAttackHit = (attacker: any, victim: any, isVictimPlayer: boolean, attackType: 'punch' | 'kick') => {
+        if (victim.isDead || isGameOver) return
         const range = 60
-        const hitbox = attacker.facingRight ? {x: attacker.x + attacker.width, y: attacker.y, width: range, height: attacker.height } : {x: attacker.x - range, y: attacker.y, width: range, height: attacker.height}
+        const hitbox = attacker.facingRight ? { x: attacker.x + attacker.width, y: attacker.y, width: range, height: attacker.height } : { x: attacker.x - range, y: attacker.y, width: range, height: attacker.height }
 
         const victimBox = {
             x: victim.x,
@@ -238,20 +345,35 @@ export default function TrainingArena() {
             width: victim.width,
             height: victim.height
         }
-        
+
         const overlap = hitbox.x < victimBox.x + victimBox.width && hitbox.x + hitbox.width > victimBox.x && hitbox.y < victimBox.y + victimBox.height && hitbox.y + hitbox.height > victimBox.y
 
         if (!overlap) return
 
-        victim.hp -= ATTACK_DAMAGE
+        let damage = 0
+        if (isVictimPlayer) {
+            const variant = attacker.variant as keyof typeof ENEMY_ATTACK_DAMAGE
+            damage = ENEMY_ATTACK_DAMAGE[variant][attackType]
+        } else {
+            damage = PLAYER_ATTACK_DAMAGE[attackType]
+        }
+
+        victim.hp -= damage
         victim.vx = attacker.facingRight ? 300 : -300
 
-        if (victim.hp <=0 ){
+        if (victim.hp <= 0) {
             victim.hp = 0
-            victim.isDead = true
+            // victim.isDead = true
 
             if (isVictimPlayer) {
-                respawnPlayer(victim, buildings.current, windowHeight)
+                handlePlayerDeath()
+            } else {
+                if (!victim.isDead) {
+                    victim.isDead = true
+                    const pts = SCORE_VALUES[victim.variant as keyof typeof SCORE_VALUES] || 100
+                    setScore(s => s + pts)
+                    setKills(k => k + 1)
+                }
             }
 
             return
@@ -267,6 +389,7 @@ export default function TrainingArena() {
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
+            if (isGameOver) return
             const k = e.key.toLowerCase()
 
             if (k === 'escape') {
@@ -322,7 +445,7 @@ export default function TrainingArena() {
         window.location.reload()
     }
 
-    const playerForHud = {...p1.current, hp: playerHp}
+    const playerForHud = { ...p1.current, hp: playerHp }
 
     return (
         <div className="w-full h-full relative overflow-hidden bg-white">
@@ -330,6 +453,70 @@ export default function TrainingArena() {
             <AnimatePresence>
                 {isPaused && !showSettings && !isEditingHud && (
                     <PauseMenu onResume={() => setIsPaused(false)} onSettings={() => setShowSettings(true)} onExit={handleExit} isOnline={false} />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {isGameOver && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-100 bg-black/80 flex items-center justify-center backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="bg-zinc-900 border-2 border-red-900/50 p-8 rounded-xl w-full max-w-md shadow-2xl relative overflow-hidden"
+                        >
+                            {/* <div className="absolute top-0 left-1/3 opacity-5 pointer-events-none">
+                                <Skull size={200} className="text-red-500" />
+                            </div> */}
+
+                            <h2 className="text-4xl font-custom text-red-500 mb-2 tracking-tighter uppercase text-center drop-shadow-lg">
+                                You Died
+                            </h2>
+
+                            <div className="flex justify-center mb-3">
+                                <div className="text-zinc-400 text-xs font-mono bg-zinc-950/50 px-3 py-1 rounded">
+                                    WAVE {wave} REACHED
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-center mb-6">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-4xl font-bold text-white">{score}</span>
+                                    <span className="text-sm text-zinc-500 uppercase font-bold">Total Score</span>
+                                </div>
+                                <span className="text-xs text-zinc-500 uppercase font-bold">Killed {kills} enemies</span>
+
+                            </div>
+
+                            <div className="mb-6">
+                                <div className="flex items-center gap-2 mb-2 text-yellow-500">
+                                    <Trophy size={20} />
+                                    <span className="text-sm font-bold uppercase tracking-wider">High Scores</span>
+                                </div>
+                                <div className="p-3 space-y-1">
+                                    {highScores.length > 0 ? highScores.map((hs, idx) => (
+                                        <div key={idx} className={`flex justify-between text-sm ${idx === 0 ? 'text-yellow-400 font-bold' : 'text-zinc-400'}`}>
+                                            <span>#{idx + 1} - {hs.date}</span>
+                                            <span>{hs.score}</span>
+                                        </div>
+                                    )) : (
+                                        <div className="text-zinc-600 text-xs text-center py-2">
+                                            No high scores yet
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-center justify-center pt-4 border-t border-zinc-800">
+                                <span className="text-zinc-500 text-xs uppercase font-bold mb-2">Respawing in <span className="text-white">{respawnTimer}</span> seconds...</span>
+
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -358,13 +545,14 @@ export default function TrainingArena() {
                         return (
                             <div className="relative" key={enemy.id}>
                                 {showHp && (
-                                    <div className="absolute z-20" style={{left: enemy.x - (cameraX.current - windowWidth / 2) + (PLAYER_W / 2) - 20,
+                                    <div className="absolute z-20" style={{
+                                        left: enemy.x - (cameraX.current - windowWidth / 2) + (PLAYER_W / 2) - 20,
                                         top: enemy.y - 15,
                                         width: '40px',
                                         height: '6px'
                                     }}>
                                         <div className="w-full h-full bg-gray-900 border border-black relative">
-                                            <div className="h-full bg-red-600 transition-all duration-100" style={{width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%`}} />
+                                            <div className="h-full bg-red-600 transition-all duration-100" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
                                         </div>
                                     </div>
                                 )}
@@ -379,7 +567,8 @@ export default function TrainingArena() {
                                     variant={enemy.variant}
                                 />
                             </div>
-                    )})}
+                        )
+                    })}
                 </GameView>
 
 
