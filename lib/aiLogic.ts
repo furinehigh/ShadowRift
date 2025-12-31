@@ -3,7 +3,6 @@ import { BotInputs, Building, PlayerState } from "@/types/types"
 
 const SIGHT_RANGE = 800
 const ATTACK_RANGE = 40
-const ATTACK_COOLDOWN = 1000
 
 export const calculateBotInputs = (
     me: PlayerState,

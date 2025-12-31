@@ -8,7 +8,7 @@ const PLAYER_W = 30
 const PLAYER_H = 70
 
 
-export const playSound = (type: 'jump' | 'rift' | 'land' | 'climb') => {
+export const playSound = (type: 'jump' | 'rift' | 'land' | 'climb' | 'death') => {
     // const audio = new Audio(`/sfx/${type}.mp3`)
     // audio.volume = 0.5
     // audio.play().catch(() => {})
