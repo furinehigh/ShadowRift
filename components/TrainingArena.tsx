@@ -577,7 +577,7 @@ export default function TrainingArena() {
                     currentRealm='normal'
                 >
                     {enemies.filter(e => !e.isDead && e.realm === 'normal').map(enemy => (
-                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.normal} windowWidth={windowWidth} />
+                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.normal} windowWidth={windowWidth} screenWidthDivider={p1Realm === 'normal' ? 1 : 2}/>
                     ))}
                 </GameView>
             </div>
@@ -597,7 +597,7 @@ export default function TrainingArena() {
                     currentRealm='rift'
                 >
                     {enemies.filter(e => !e.isDead && e.realm === 'rift').map(enemy => (
-                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.rift} windowWidth={windowWidth} />
+                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.rift} windowWidth={windowWidth} screenWidthDivider={2}/>
                     ))}
                 </GameView>
             </div>
@@ -625,14 +625,17 @@ export default function TrainingArena() {
 }
 
 
-function EnemyRenderer({ enemy, cameraX, windowWidth }: { enemy: Enemy, cameraX: number, windowWidth: number }): React.ReactNode {
+function EnemyRenderer({ enemy, cameraX, windowWidth, screenWidthDivider = 1 }: { enemy: Enemy, cameraX: number, windowWidth: number, screenWidthDivider?: number }): React.ReactNode {
+
+    const offset = cameraX - (windowWidth / screenWidthDivider) /2
+    const relativeX = enemy.x - offset
     const showHp = Date.now() - enemy.lastHitTime < ENEMY_HP_VISIBLE_TIME
 
     return (
         <div className="relative">
             {showHp && (
                 <div className="absolute z-20" style={{
-                    left: enemy.x - (cameraX - windowWidth / 2) + (PLAYER_W / 2) - 20,
+                    left: relativeX + (PLAYER_W / 2) - 20,
                     top: enemy.y - 15,
                     width: '40px',
                     height: '6px'
@@ -644,7 +647,7 @@ function EnemyRenderer({ enemy, cameraX, windowWidth }: { enemy: Enemy, cameraX:
             )}
 
             <Fighter
-                x={enemy.x - (cameraX - windowWidth / 2)}
+                x={relativeX}
                 y={enemy.y}
                 width={enemy.width}
                 height={enemy.height}
