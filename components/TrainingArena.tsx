@@ -98,14 +98,21 @@ export default function TrainingArena() {
         x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0
     })
 
-    const buildings = useRef<Building[]>([])
+    const normalBuildings = useRef<Building[]>([])
+    const riftBuildings = useRef<Building[]>([])
+
     const cameraX = useRef(0)
+
+    const camera = useRef({normal: 0, rift: 0})
     const inputs = useRef({ left: false, right: false, jump: false, kick: false, punch: false })
 
     useEffect(() => {
-        buildings.current = generateSkyline('normal')
+        normalBuildings.current = generateSkyline('normal')
+        riftBuildings.current = generateSkyline('rift')
         spawnWave(1)
         loadHighScore()
+
+        setP1Realm('normal')
     }, [])
 
     useEffect(() => {
@@ -146,7 +153,7 @@ export default function TrainingArena() {
         setPlayerHp(100)
 
         if (p1.current) {
-            const spawn = getSafeSpawn(buildings.current, windowHeight)
+            const spawn = getSafeSpawn(normalBuildings.current, windowHeight)
 
             p1.current.x = spawn.x
             p1.current.y = spawn.y
@@ -176,13 +183,15 @@ export default function TrainingArena() {
         const count = 2 + Math.floor(waveNumber * 1.5)
         const newEnemies: Enemy[] = []
 
-        const validSpawnPoints = buildings.current.filter(b => b.x > 400 && b.width > 50)
+        const currentBuildingSet = normalBuildings.current
+
+        const validSpawnPoints = currentBuildingSet.filter(b => b.x > 400 && b.width > 50)
 
         for (let i = 0; i < count; i++) {
             const isBoss = i === count - 1 && waveNumber % 3 === 0
             const isElite = Math.random() > 0.7
 
-            const targetBuilding = validSpawnPoints[i % validSpawnPoints.length] || buildings.current[0]
+            const targetBuilding = validSpawnPoints[i % validSpawnPoints.length] || currentBuildingSet[0]
 
             const spawnX = targetBuilding.x + (targetBuilding.width / 2) - (PLAYER_W / 2)
             const groundY = windowHeight - targetBuilding.height
@@ -238,25 +247,40 @@ export default function TrainingArena() {
                 p1.current.attackAnim = 'PUNCH'
                 inputs.current.punch = false
 
-                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false, 'punch'))
+                enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'punch'))
             } else if (inputs.current.kick) {
                 p1.current.attackUntil = now + 500
                 p1.current.attackAnim = 'LEG_ATTACK_1'
                 inputs.current.kick = false
-                enemies.forEach(e => !e.isDead && checkAttackHit(p1.current, e, false, 'kick'))
+                enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'kick'))
             }
         }
 
-        updatePhysics(p1.current, dt, buildings.current, windowHeight)
+        const playerBuildings = p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current
+
+        updatePhysics(p1.current, dt, playerBuildings, windowHeight)
         cameraX.current = p1.current.x
 
         setEnemies(prev => {
             const updated = prev.map(enemy => {
                 if (enemy.isDead) return enemy
 
-                const botInputs = calculateBotInputs(enemy, p1.current, buildings.current, dt)
+                const botBuildings = enemy.realm === 'normal' ? normalBuildings.current : riftBuildings.current
 
+                const botInputs = calculateBotInputs(enemy, p1.current, botBuildings, dt)
+
+                const now = Date.now()
                 enemy.vx = 0
+
+                if (botInputs.rift) {
+                    const canRift = now - enemy.lastRiftSwitch > RIFT_COOLDOWN
+                    if (canRift) {
+                        enemy.lastRiftSwitch = now
+                        enemy.realm = enemy.realm === 'normal' ? 'rift' : 'normal'
+                        enemy.isClimbing = false
+                        playSound('rift')
+                    }
+                }
 
                 const speed = ENEMY_SPEED[enemy.variant] || 250
 
@@ -273,24 +297,27 @@ export default function TrainingArena() {
                     enemy.vy = JUMP_FORCE
                 }
 
-                const now = Date.now()
 
                 if (now > enemy.attackUntil) {
-                    if (botInputs.punch) {
-                        enemy.attackUntil = now + 500
-                        enemy.attackAnim = 'PUNCH'
+                    if (enemy.realm === p1.current.realm) {
+                        if (botInputs.punch) {
+                            enemy.attackUntil = now + 500
+                            enemy.attackAnim = 'PUNCH'
 
-                        checkAttackHit(enemy, p1.current, true, 'punch')
-                    } else if (botInputs.kick){
-                        enemy.attackUntil = now + 500
-                        enemy.attackAnim = 'LEG_ATTACK_1'
+                            checkAttackHit(enemy, p1.current, true, 'punch')
+                        } else if (botInputs.kick) {
+                            enemy.attackUntil = now + 500
+                            enemy.attackAnim = 'LEG_ATTACK_1'
 
-                        checkAttackHit(enemy, p1.current, true, 'kick')
+                            checkAttackHit(enemy, p1.current, true, 'kick')
 
+                        }
                     }
                 }
 
-                updatePhysics(enemy, dt, buildings.current, windowHeight)
+                const currentBotBuildings = enemy.realm === 'normal' ? normalBuildings.current : riftBuildings.current
+
+                updatePhysics(enemy, dt, currentBotBuildings, windowHeight)
 
                 if (enemy.y > windowHeight + 200) enemy.isDead = true
                 if (enemy.hp <= 0) enemy.isDead = true
@@ -308,6 +335,12 @@ export default function TrainingArena() {
 
         if ((p1.current.hp <= 0 || p1.current.y > windowHeight + 200) && !p1.current.isDead) {
             handlePlayerDeath()
+        }
+
+        if (p1.current.realm === 'normal') {
+            camera.current.normal = p1.current.x
+        } else {
+            camera.current.rift = p1.current.x
         }
 
     })
@@ -336,6 +369,9 @@ export default function TrainingArena() {
 
     const checkAttackHit = (attacker: any, victim: any, isVictimPlayer: boolean, attackType: 'punch' | 'kick') => {
         if (victim.isDead || isGameOver) return
+
+        if (attacker.realm !== victim.realm) return
+
         const range = 60
         const hitbox = attacker.facingRight ? { x: attacker.x + attacker.width, y: attacker.y, width: range, height: attacker.height } : { x: attacker.x - range, y: attacker.y, width: range, height: attacker.height }
 
@@ -447,8 +483,9 @@ export default function TrainingArena() {
 
     const playerForHud = { ...p1.current, hp: playerHp }
 
+
     return (
-        <div className="w-full h-full relative overflow-hidden bg-white">
+        <div className="flex w-full h-full relative overflow-hidden select-none bg-white">
 
             <AnimatePresence>
                 {isPaused && !showSettings && !isEditingHud && (
@@ -525,54 +562,46 @@ export default function TrainingArena() {
                     <SettingsPage onClose={() => setShowSettings(false)} />
                 )}
             </AnimatePresence>
-            <RealmScene realm={realms[0]} cameraOffset={cameraX.current} />
 
-            <div className="absolute inset-0">
+            <div className="relative h-full overflow-hidden transition-all duration-300 border-r border-white/20" style={{ width: p1Realm === 'normal' ? '100%' : '50%' }}>
+                <RealmScene realm={realms[0]} cameraOffset={camera.current.normal} />
                 <GameView
-                    cameraX={cameraX.current}
+                    cameraX={camera.current.normal}
                     player={p1.current}
                     otherPlayer={null}
-                    buildings={buildings.current}
+                    buildings={normalBuildings.current}
                     isRift={false}
                     active={true}
-                    screenWidthDivider={1}
+                    screenWidthDivider={p1Realm === 'normal' ? 1 : 2}
                     windowWidth={windowWidth}
                     currentRealm='normal'
                 >
-                    {enemies.filter(e => !e.isDead).map(enemy => {
-                        const showHp = Date.now() - enemy.lastHitTime < ENEMY_HP_VISIBLE_TIME
-
-                        return (
-                            <div className="relative" key={enemy.id}>
-                                {showHp && (
-                                    <div className="absolute z-20" style={{
-                                        left: enemy.x - (cameraX.current - windowWidth / 2) + (PLAYER_W / 2) - 20,
-                                        top: enemy.y - 15,
-                                        width: '40px',
-                                        height: '6px'
-                                    }}>
-                                        <div className="w-full h-full bg-gray-900 border border-black relative">
-                                            <div className="h-full bg-red-600 transition-all duration-100" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <Fighter
-                                    x={enemy.x - (cameraX.current - windowWidth / 2)}
-                                    y={enemy.y}
-                                    width={enemy.width}
-                                    height={enemy.height}
-                                    facingRight={enemy.facingRight}
-                                    anim={getAnim(enemy)}
-                                    variant={enemy.variant}
-                                />
-                            </div>
-                        )
-                    })}
+                    {enemies.filter(e => !e.isDead && e.realm === 'normal').map(enemy => (
+                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.normal} windowWidth={windowWidth} />
+                    ))}
                 </GameView>
-
-
             </div>
+
+
+            <div className="relative h-full overflow-hidden transition-all duration-300" style={{ width: p1Realm === 'rift' ? '50%' : '0%', opacity: 1 }}>
+                <RealmScene realm={realms[1]} cameraOffset={camera.current.rift} />
+                <GameView
+                    cameraX={camera.current.rift}
+                    player={p1.current}
+                    otherPlayer={null}
+                    buildings={riftBuildings.current}
+                    isRift={true}
+                    active={true}
+                    screenWidthDivider={2}
+                    windowWidth={windowWidth}
+                    currentRealm='rift'
+                >
+                    {enemies.filter(e => !e.isDead && e.realm === 'rift').map(enemy => (
+                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.rift} windowWidth={windowWidth} />
+                    ))}
+                </GameView>
+            </div>
+
 
             <TrainingHUD wave={wave} enemies={enemies} player={playerForHud} />
             <EnemyIndicators enemies={enemies} player={p1.current} width={windowWidth} height={windowHeight} />
@@ -590,6 +619,38 @@ export default function TrainingArena() {
                 }}
                 onPause={() => setIsPaused(true)}
                 onRift={handleRiftSwitch}
+            />
+        </div>
+    )
+}
+
+
+function EnemyRenderer({ enemy, cameraX, windowWidth }: { enemy: Enemy, cameraX: number, windowWidth: number }): React.ReactNode {
+    const showHp = Date.now() - enemy.lastHitTime < ENEMY_HP_VISIBLE_TIME
+
+    return (
+        <div className="relative">
+            {showHp && (
+                <div className="absolute z-20" style={{
+                    left: enemy.x - (cameraX - windowWidth / 2) + (PLAYER_W / 2) - 20,
+                    top: enemy.y - 15,
+                    width: '40px',
+                    height: '6px'
+                }}>
+                    <div className="w-full h-full bg-gray-900 border border-black relative">
+                        <div className="h-full bg-red-600 transition-all duration-100" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
+                    </div>
+                </div>
+            )}
+
+            <Fighter
+                x={enemy.x - (cameraX - windowWidth / 2)}
+                y={enemy.y}
+                width={enemy.width}
+                height={enemy.height}
+                facingRight={enemy.facingRight}
+                anim={getAnim(enemy)}
+                variant={enemy.variant}
             />
         </div>
     )

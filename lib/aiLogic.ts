@@ -10,9 +10,15 @@ export const calculateBotInputs = (
     buildings: Building[],
     dt: number
 ): BotInputs => {
-    const inputs: BotInputs = {left: false, right: false, jump: false, punch: false, kick: false}
+    const inputs: BotInputs = {left: false, right: false, jump: false, punch: false, kick: false, rift: false}
 
     if (me.isDead || target.isDead) return inputs
+
+    if (me.realm !== target.realm) {
+        inputs.rift = true
+
+        return inputs
+    }
 
     // slow downnn
     if (me.attackUntil && Date.now() < me.attackUntil) {

@@ -115,6 +115,7 @@ export interface BotInputs {
     jump: boolean
     punch: boolean
     kick: boolean
+    rift: boolean
 }
 
 export interface Enemy {
