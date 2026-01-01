@@ -49,7 +49,7 @@ export function getAnim(p: any) {
     if (!p.isGrounded && p.vy < 0) return "JUMP"
     if (Math.abs(p.vx) > 350) return 'RUN'
     if (Math.abs(p.vx) > 10) return 'WALK'
-    return 'animation0'
+    return 'IDLE'
 }
 
 

@@ -100,7 +100,7 @@ export default function Fighter({ x, y, width, height, facingRight, anim, varian
                 }
 
 
-                armatureDisplay.animation.play('animation0')
+                armatureDisplay.animation.play('IDLE')
             } catch (error) {
                 console.error('Error loading Fighter assets: ', error)
             }

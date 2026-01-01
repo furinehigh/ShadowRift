@@ -494,7 +494,7 @@ export default function TrainingArena() {
             </AnimatePresence>
 
             <AnimatePresence>
-                {isGameOver && (
+                {wave && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -522,8 +522,8 @@ export default function TrainingArena() {
 
                             <div className="flex flex-col items-center mb-6">
                                 <div className="flex flex-col items-center">
-                                    <span className="text-4xl font-bold text-white">{score}</span>
-                                    <span className="text-sm text-zinc-500 uppercase font-bold">Total Score</span>
+                                    <span className="text-6xl font-bold text-white">{score}</span>
+                                    {/* <span className="text-sm text-zinc-500 uppercase font-bold">Total Score</span> */}
                                 </div>
                                 <span className="text-xs text-zinc-500 uppercase font-bold">Killed {kills} enemies</span>
 
