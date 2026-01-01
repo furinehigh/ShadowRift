@@ -494,7 +494,7 @@ export default function TrainingArena() {
             </AnimatePresence>
 
             <AnimatePresence>
-                {wave && (
+                {isGameOver && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
