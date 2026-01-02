@@ -43,6 +43,9 @@ export type PlayerState = {
     climbLockX: number | null
     attackUntil: number
     attackAnim: string | null
+    stunUntil: number
+    hitAnim: string | null
+    isDying: boolean
 }
 
 export type Building = {

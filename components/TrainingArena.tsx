@@ -59,6 +59,7 @@ const PLAYER_ATTACK_DAMAGE = {
     punch: 8
 }
 const ENEMY_HP_VISIBLE_TIME = 6000
+const SPAWN_INTERVAL = 2500
 
 
 interface Enemy extends PlayerState {
@@ -85,6 +86,9 @@ export default function TrainingArena() {
     const [enemies, setEnemies] = useState<Enemy[]>([])
     const [wave, setWave] = useState(1)
 
+    const spawnQueue = useRef<Enemy[]>([])
+    const lastSpawnTime = useRef(0)
+
     const [playerHp, setPlayerHp] = useState(100)
 
     const [score, setScore] = useState(0)
@@ -95,7 +99,7 @@ export default function TrainingArena() {
     const [highScores, setHighScores] = useState<HighScore[]>([])
 
     const p1 = useRef<PlayerState>({
-        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0
+        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null
     })
 
     const normalBuildings = useRef<Building[]>([])
@@ -109,7 +113,7 @@ export default function TrainingArena() {
     useEffect(() => {
         normalBuildings.current = generateSkyline('normal')
         riftBuildings.current = generateSkyline('rift')
-        spawnWave(1)
+        queueWave(1)
         loadHighScore()
 
         setP1Realm('normal')
@@ -151,6 +155,8 @@ export default function TrainingArena() {
         setKills(0)
         setWave(1)
         setPlayerHp(100)
+        setEnemies([])
+        spawnQueue.current = []
 
         if (p1.current) {
             const spawn = getSafeSpawn(normalBuildings.current, windowHeight)
@@ -161,6 +167,7 @@ export default function TrainingArena() {
             p1.current.vy = 0
             p1.current.hp = 100
             p1.current.isDead = false
+            p1.current.isDying
             p1.current.isClimbing = false
             p1.current.realm = 'normal'
             setP1Realm('normal')

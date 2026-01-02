@@ -40,13 +40,21 @@ export function useWindowSize() {
 
 
 
-export function getAnim(p: any) {
-    if (p.isDead) return 'DEATH'
+export function getAnim(p: PlayerState) {
+    if (p.isDying || (p.hp <= 0 && !p.isDead) ) return 'DEATH'
+
+    if (Date.now() < p.stunUntil && p.hitAnim){
+        return p.hitAnim
+    }
+
     if (p.isClimbing) return 'CLIMB'
+
     if (Date.now() < p.attackUntil && p.attackAnim) {
         return p.attackAnim
     }
     if (!p.isGrounded && p.vy < 0) return "JUMP"
+    if (!p.isGrounded && p.vy > 0) return 'FALL'
+
     if (Math.abs(p.vx) > 350) return 'RUN'
     if (Math.abs(p.vx) > 10) return 'WALK'
     return 'IDLE'
@@ -63,6 +71,11 @@ export const getSafeSpawn = (buildings: Building[], floorY: number) => {
 }
 
 export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[], windowHeight: number) => {
+
+    const isFallingOff = p.y > windowHeight
+
+    if ((p.isDead || p.isDying) && !isFallingOff) return
+
     if (p.isDead) return
     
     const floorY = windowHeight
