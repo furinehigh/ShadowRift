@@ -46,6 +46,7 @@ export type PlayerState = {
     stunUntil: number
     hitAnim: string | null
     isDying: boolean
+    lastHitTime:  number
 }
 
 export type Building = {

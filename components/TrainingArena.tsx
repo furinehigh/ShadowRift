@@ -62,6 +62,9 @@ const ENEMY_HP_VISIBLE_TIME = 6000
 const BASE_SPAWN = 4500
 const MIN_SPAWN = 2000
 
+const PLAYER_HEAL_DELAY = 4000
+const PLAYER_HEAL_RATE = 10
+
 const getSpawnDelay = (wave: number) => {
     const difficultyCurve = Math.max(
         MIN_SPAWN,
@@ -112,7 +115,7 @@ export default function TrainingArena() {
     const [highScores, setHighScores] = useState<HighScore[]>([])
 
     const p1 = useRef<PlayerState>({
-        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null
+        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0
     })
 
     const normalBuildings = useRef<Building[]>([])
@@ -301,6 +304,20 @@ export default function TrainingArena() {
             }
         }
 
+        if (!p1.current.isDead && !p1.current.isDying) {
+            const timeSinceHit = now - p1.current.lastHitTime
+
+            if (timeSinceHit > PLAYER_HEAL_DELAY && p1.current.hp < 100) {
+                const healAmount = PLAYER_HEAL_RATE * (dt)
+
+                const newHp = Math.min(100, p1.current.hp + healAmount)
+
+                p1.current.hp = newHp
+
+                setPlayerHp(newHp)
+            }
+        }
+
 
         updatePhysics(p1.current, dt, playerBuildings, windowHeight)
         cameraX.current = p1.current.x
@@ -482,6 +499,7 @@ export default function TrainingArena() {
 
         if (isVictimPlayer) {
             setPlayerHp(victim.hp)
+            p1.current.lastHitTime = Date.now()
             playSound('land')
         } else {
             victim.lastHitTime = Date.now()
