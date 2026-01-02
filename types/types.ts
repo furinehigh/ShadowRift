@@ -126,6 +126,7 @@ export interface Enemy {
     hp: number
     variant: 'grunt' | 'elite' | 'boss'
     isDead: boolean
+    isDying: boolean
 }
 
 export interface TrainingHUDProps {

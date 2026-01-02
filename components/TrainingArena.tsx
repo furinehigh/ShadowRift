@@ -59,7 +59,19 @@ const PLAYER_ATTACK_DAMAGE = {
     punch: 8
 }
 const ENEMY_HP_VISIBLE_TIME = 6000
-const SPAWN_INTERVAL = 2500
+const BASE_SPAWN = 4500
+const MIN_SPAWN = 2000
+
+const getSpawnDelay = (wave: number) => {
+    const difficultyCurve = Math.max(
+        MIN_SPAWN,
+        BASE_SPAWN - wave * 120
+    )
+
+    const chaos = Math.random() * 250
+
+    return difficultyCurve - chaos
+}
 
 
 interface Enemy extends PlayerState {
@@ -88,6 +100,7 @@ export default function TrainingArena() {
 
     const spawnQueue = useRef<Enemy[]>([])
     const lastSpawnTime = useRef(0)
+    const currentSpawnDelay = useRef(BASE_SPAWN)
 
     const [playerHp, setPlayerHp] = useState(100)
 
@@ -190,6 +203,7 @@ export default function TrainingArena() {
     const queueWave = (waveNumber: number) => {
         const count = 2 + Math.floor(waveNumber * 1.5)
         // const newEnemies: Enemy[] = []
+        currentSpawnDelay.current = getSpawnDelay(waveNumber)
 
         const currentBuildingSet = normalBuildings.current
 
@@ -227,12 +241,13 @@ export default function TrainingArena() {
         if (!p1.current || isPaused) return
         const now = Date.now()
 
-        if (spawnQueue.current.length > 0 && now - lastSpawnTime.current > SPAWN_INTERVAL) {
+        if (spawnQueue.current.length > 0 && now - lastSpawnTime.current > currentSpawnDelay.current) {
             const newEnemy = spawnQueue.current.shift()
 
             if (newEnemy) {
                 setEnemies(prev => [...prev, newEnemy])
                 lastSpawnTime.current = now
+                currentSpawnDelay.current = getSpawnDelay(wave)
                 playSound('rift')
             }
         }
@@ -418,7 +433,7 @@ export default function TrainingArena() {
 
         if (attacker.realm !== victim.realm) return
 
-        const range = 60
+        const range = 30
         const hitbox = attacker.facingRight ? { x: attacker.x + attacker.width, y: attacker.y, width: range, height: attacker.height } : { x: attacker.x - range, y: attacker.y, width: range, height: attacker.height }
 
         const victimBox = {

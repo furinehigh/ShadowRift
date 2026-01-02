@@ -42,12 +42,12 @@ export function useWindowSize() {
 
 export function getAnim(p: PlayerState) {
     if (p.isDying || (p.hp <= 0 && !p.isDead) ) return 'DEATH'
-
+    
+    if (p.isClimbing) return 'CLIMB'
     if (Date.now() < p.stunUntil && p.hitAnim){
         return p.hitAnim
     }
 
-    if (p.isClimbing) return 'CLIMB'
 
     if (Date.now() < p.attackUntil && p.attackAnim) {
         return p.attackAnim

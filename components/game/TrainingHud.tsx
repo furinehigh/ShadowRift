@@ -3,7 +3,7 @@
 import { TrainingHUDProps } from "@/types/types"
 import { AnimatePresence, motion } from "framer-motion"
 import { Shield, Skull, UserIcon, Zap } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 
 const MAX_HP = {
@@ -14,6 +14,10 @@ const MAX_HP = {
 
 export default function TrainingHUD({ wave, enemies, player }: TrainingHUDProps) {
     const [username, setUsername] = useState('Unknown_fr')
+    const [showWaveCleared, setShowWaveCleared] = useState(false)
+
+    const prevWave = useRef(wave)
+
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -24,11 +28,26 @@ export default function TrainingHUD({ wave, enemies, player }: TrainingHUDProps)
     })
 
 
-    const aliveEnemies = enemies.filter(e => !e.isDead)
+    const aliveEnemies = enemies.filter(e => !e.isDead && !e.isDying)
+    const activeCount = aliveEnemies.length
+
+    useEffect(() => {
+        if (prevWave.current !== wave) {
+            if (prevWave.current !== 0) {
+                setShowWaveCleared(true)
+
+                const t = setTimeout(() => setShowWaveCleared(false), 3000)
+
+                return () => clearTimeout(t)
+            }
+            prevWave.current = wave
+        }
+    }, [wave])
+
     const boss = aliveEnemies.find(e => e.variant === 'boss')
 
     const totalEnemies = enemies.length
-    const progress = totalEnemies > 0 ? ((totalEnemies - aliveEnemies.length) / totalEnemies) * 100 : 0
+    const progress = totalEnemies > 0 ? ((totalEnemies - activeCount) / totalEnemies) * 100 : 0
 
     const now = Date.now()
     const elapsed = now - player.lastRiftSwitch
@@ -124,20 +143,20 @@ export default function TrainingHUD({ wave, enemies, player }: TrainingHUDProps)
                                 className={`w-3 h-3 rounded-full shadow-sm ${enemy.variant === 'boss' ? 'bg-purple-500 w-4 h-4 animate-pulse' : enemy.variant === 'elite' ? 'bg-white' : 'bg-gray-500'}`}
                             />
                         ))}
-                        {aliveEnemies.length > 10 && (
+                        {activeCount > 10 && (
                             <span className="text-xs text-red-400 font-bold ">
-                                +{aliveEnemies.length - 10}
+                                +{activeCount - 10}
                             </span>
                         )}
                     </div>
                     <span className="text-[10px] text-white font-mono">
-                        {aliveEnemies.length} REMAINING
+                        {activeCount} REMAINING
                     </span>
                 </div>
             </div>
             <div className="absolute bottom-28 w-full flex justify-center">
                 <AnimatePresence>
-                    {aliveEnemies.length === 0 && (
+                    {showWaveCleared && (
                         <motion.div
                             initial={{ scale: 0.5, opacity: 0 }}
                             animate={{ scale: 1.2, opacity: 1 }}
