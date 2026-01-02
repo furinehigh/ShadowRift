@@ -53,7 +53,7 @@ export function getAnim(p: PlayerState) {
         return p.attackAnim
     }
     if (!p.isGrounded && p.vy < 0) return "JUMP"
-    if (!p.isGrounded && p.vy > 0) return 'FALL'
+    // if (!p.isGrounded && p.vy > 0) return 'FALL'
 
     if (Math.abs(p.vx) > 350) return 'RUN'
     if (Math.abs(p.vx) > 10) return 'WALK'
@@ -76,14 +76,14 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
 
     if ((p.isDead || p.isDying) && !isFallingOff) return
 
-    if (p.isDead) return
+    const isStunned = Date.now() < p.stunUntil
     
     const floorY = windowHeight
 
-    const prevX = p.x
+    // const prevX = p.x
     const prevY = p.y
 
-    if (p.isClimbing && p.climbTargetY !== null) {
+    if (p.isClimbing && p.climbTargetY !== null && !isStunned) {
         // console.log('player is climbing', p.isClimbing)
 
         p.y += (p.climbTargetY - p.y) * CLIMB_SPEED * dt
@@ -127,7 +127,9 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
             headNearLedge &&
             isAtEdge &&
             !p.isGrounded &&
-            !p.isClimbing
+            !p.isClimbing &&
+            !isStunned &&
+            !p.isDying
         ) {
             p.isClimbing = true
             p.vx = 0

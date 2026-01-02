@@ -172,17 +172,24 @@ export default function Fighter({ x, y, width, height, facingRight, anim, varian
             return
         }
 
+        if (animationName === 'DEATH' && armature.animation.lastAnimationName === 'DEATH' && armature.animation.isCompleted) {
+            return
+        }
+
         if (armature.animation.hasAnimation(animationName)) {
             const oneShotAnims = ['JUMP', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH']
 
-            const attackAnims = ['PUNCH', 'LEG_ATTACK_1', 'RUN']
+            const fastAnims = ['PUNCH', 'LEG_ATTACK_1', 'RUN']
             const playTimes = oneShotAnims.includes(animationName) ? 1: 0
 
             const animationState = armature.animation.fadeIn(animationName, 0.1, playTimes)
 
             if (animationState) {
-                if (attackAnims.includes(animationName)) {
+                if (fastAnims.includes(animationName)) {
                     animationState.timeScale = 1.5
+                } else if (animationName === 'DEATH') {
+                    animationState.timeScale = 1.0
+                    animationState.resetToPose = false
                 } else {
                     animationState.timeScale = 1.0
                 }

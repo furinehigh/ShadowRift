@@ -1,7 +1,7 @@
 import { AlertTriangle, Skull } from "lucide-react"
 
 export default function EnemyIndicators({enemies, player, width, height}: any) {
-    const offScreenEnemies = enemies.filter((e: any) => !e.isDead && Math.abs(e.x - player.x) > width / 2)
+    const offScreenEnemies = enemies.filter((e: any) => !e.isDead && !e.isDying && Math.abs(e.x - player.x) > width / 2)
 
     return (
         <div>
