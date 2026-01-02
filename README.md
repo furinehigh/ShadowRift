@@ -12,10 +12,19 @@ I'm developing this game to improve my game dev as well as backend skills, I hav
 - Redis and MongoDB for game server
 
 # Features
-
+- Mobile compatibility
+- Proper animations for all types of movements and effects
+- Custom controls on both PC and mobiles
+- Training mode (for training, bcoz u r noob jk)
+- 
 
 # Upcomming features or changes
-
+- Play with other online players
+- Play with friends
+- Multiplayer option
+- Online profile for all
+- Ever-growing shop
+- 
 
 # AI usage
 AI usage is negligible and limited to the bugs fixes(frustrating ones :), I haven't used any kind of copilots either.
