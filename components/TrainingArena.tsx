@@ -114,12 +114,13 @@ export default function TrainingArena() {
     const [respawnTimer, setRespawnTimer] = useState(5)
     const [highScores, setHighScores] = useState<HighScore[]>([])
 
-    const p1 = useRef<PlayerState>({
-        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0
-    })
 
     const normalBuildings = useRef<Building[]>([])
     const riftBuildings = useRef<Building[]>([])
+
+    const p1 = useRef<PlayerState>({
+        x: 1000, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0
+    })
 
     const cameraX = useRef(0)
 

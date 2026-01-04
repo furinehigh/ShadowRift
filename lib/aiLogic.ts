@@ -10,7 +10,7 @@ export const calculateBotInputs = (
     buildings: Building[],
     dt: number
 ): BotInputs => {
-    const inputs: BotInputs = {left: false, right: false, jump: false, punch: false, kick: false, rift: false}
+    const inputs: BotInputs = { left: false, right: false, jump: false, punch: false, kick: false, rift: false }
 
     if (me.isDead || target.isDead) return inputs
 
@@ -36,10 +36,17 @@ export const calculateBotInputs = (
 
             if (Math.random() > 0.99) inputs.punch = true
             else if (Math.random() > 0.99) inputs.kick = true
-            
+
         }
-        if (dx > 10 && !me.facingRight) inputs.right = true
-        if (dx < -10 && me.facingRight) inputs.left = true
+        if (dx > 0 && !me.facingRight) {
+            inputs.right = true
+            inputs.left = false
+
+        }
+        if (dx < 0 && me.facingRight) {
+            inputs.left = true
+            inputs.right = false
+        }
 
         return inputs
     }
@@ -48,9 +55,11 @@ export const calculateBotInputs = (
 
     if (dx > 30) {
         inputs.right = true
+        inputs.left = false
 
     } else if (dx < -30) {
         inputs.left = true
+        inputs.right = false
     }
 
     // env awareness (jump/climb)
@@ -74,7 +83,7 @@ export const calculateBotInputs = (
     if (me.isGrounded) {
         if (!platformAhead) {
             inputs.jump = true
-            
+
         }
         else if (wallAhead && dy > 50) {
             inputs.jump = true
