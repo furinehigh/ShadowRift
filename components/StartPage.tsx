@@ -55,7 +55,7 @@ function StartPage() {
   }, [gameState])
 
   const handlePlay = () => {
-    setGameState('playing')
+    setGameState('training')
   }
 
   const handleAuthSuccess = () => {
@@ -164,8 +164,8 @@ function StartPage() {
 
           <div className={`flex gap-4 md:gap-12 items-end justify-center transition-all duration-500 ${isModalOpen ? 'translate-y-20 opacity-0' : 'translate-y-0 opacity-100'}`}>
             <BottomNavButton onClick={() => setGameState('training')} label='TRAINING' delay={0.2} />
-            <BottomNavButton onClick={() => {}} label='FRIENDS' delay={0.3} />
-            <BottomNavButton onClick={() => {}} label='PROFILE' delay={0.2} />
+            <BottomNavButton disabled onClick={() => {}} label='FRIENDS' delay={0.3} />
+            <BottomNavButton disabled onClick={() => {}} label='PROFILE' delay={0.2} />
           </div>
         </div>
       )}
@@ -240,7 +240,7 @@ function MenuButton({ icon, label, delay, onClick }: { icon: React.ReactNode, la
   )
 }
 
-function BottomNavButton({ label, delay, onClick }: { label: string, delay: number, onClick: () => void }) {
+function BottomNavButton({ label, delay, onClick, disabled = false }: { label: string, delay: number, onClick: () => void, disabled?: boolean }) {
   return (
     <motion.button
       initial={{ y: 100, opacity: 0 }}
@@ -248,6 +248,7 @@ function BottomNavButton({ label, delay, onClick }: { label: string, delay: numb
       whileHover={{ y: -5 }}
       whileTap='tap'
       transition={{ delay, type: 'spring' }}
+      disabled={disabled}
       onClick={onClick}
       className='flex flex-col items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors w-24'
     >
