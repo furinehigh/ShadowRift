@@ -11,7 +11,7 @@ import { useSettings } from "@/context/SettingsContext"
 type Tab = 'graphics' | 'audio' | 'controls' | 'gameplay'
 
 export default function SettingsPage({ onClose }: { onClose: () => void }) {
-    const [activeTab, setActiveTab] = useState<Tab>('graphics')
+    const [activeTab, setActiveTab] = useState<Tab>('controls')
     const {resetDefaults} = useSettings()
 
     return (
@@ -33,12 +33,14 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                             onClick={() => setActiveTab('graphics')}
                             icon={<Monitor size={18} />}
                             label='GRAPHICS'
+                            disabled
                         />
                         <SidebarItem
                             active={activeTab === 'audio'}
                             onClick={() => setActiveTab('audio')}
                             icon={<Volume2 size={18} />}
                             label='AUDIO'
+                            disabled
                         />
                         <SidebarItem
                             active={activeTab === 'controls'}
@@ -51,6 +53,7 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                             onClick={() => setActiveTab('gameplay')}
                             icon={<Gamepad2 size={18} />}
                             label='GAMEPLAY'
+                            disabled
                         />
                     </div>
 
@@ -89,10 +92,11 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
     )
 }
 
-function SidebarItem({ active, icon, label, onClick }: any) {
+function SidebarItem({ active, icon, label, onClick, disabled = false }: any) {
     return (
         <button
             onClick={onClick}
+            disabled={disabled}
             className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-mono tracking-wider transition-all duration-200 text-gray-400`}
         >
             <span className={active ? 'text-purple-400' : ''}>{icon}</span>
@@ -222,7 +226,7 @@ function ControlsSettings({onClose}: {onClose: () => void}) {
                 <div key={action} className="flex items-center justify-between py-3 border-b border-white/5">
                     <span className="text-gray-300 capitalize">{action}</span>
                     <button onClick={() => handleKeyBind(action)} className={`min-w-[80px] px-4 py-2 rounded text-sm font-bold border transition-all ${listening === action ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500 animate-pulse' : 'bg-white/5 text-white border-white/10 hover:border-purple-500'}`}>
-                        {listening === action ? 'PRESS KEY' : (key ? String(key).toUpperCase() : "NONE")}
+                        {listening === action ? 'PRESS KEY' : (key === " " ? 'SPACE' : key ? String(key).toUpperCase() : "NONE")}
                     </button>
                 </div>
             ))}
