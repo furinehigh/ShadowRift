@@ -5,6 +5,9 @@ Note: This game is under development, so expect bugs and glitches..:) + im total
 # Why build this?
 I'm developing this game to improve my game dev as well as backend skills, I have played many games like these and always wanted to create a good fighting game with proper animations and multiplayer capabilities + want some Milkyway coins too :)
 
+# How did u get the idea?
+This game is inspired by Shadow Fight + Mini militia (especially the training mode). I used to play both of these games with my friends back in the day..:) so why not combine them..
+
 # Tech stack
 - Next.TS
 - Phaser to use 2D model with bones and animations
