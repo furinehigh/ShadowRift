@@ -103,14 +103,13 @@ export interface SettingsContextType {
     resetDefaults: () => void
 }
 
-export interface FighterProps {
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    facingRight: boolean,
-    anim: string
-    variant?: 'player' | 'grunt' | 'elite' | 'boss'
+export interface GameLayerProps {
+    width: number
+    height: number
+    cameraX: number
+    player: PlayerState
+    enemies: any[]
+    realm: 'normal' | 'rift'
 }
 
 export interface BotInputs {
@@ -141,13 +140,10 @@ export interface TrainingHUDProps {
 
 export interface GameViewProps {
     cameraX: number
-    player: PlayerState
-    otherPlayer: PlayerState | null
     buildings: Building[]
     isRift: boolean
     active: boolean
     screenWidthDivider: number
     windowWidth: number
-    currentRealm: string
     children?: ReactNode
 }

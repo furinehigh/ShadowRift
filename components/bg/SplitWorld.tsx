@@ -12,8 +12,9 @@ import { useSettings } from "@/context/SettingsContext"
 import { AnimatePresence } from "framer-motion"
 import PauseMenu from "../modals/PauseMenu"
 import SettingsPage from "../SettingsPage"
-import Fighter from "../game/Fighter"
+import Fighter from "../game/GameLayer"
 import { generateSkyline, getAnim, playSound, updatePhysics, useWindowSize } from "@/lib/game-utils"
+import GameLayer from "../game/GameLayer"
 
 const JUMP_FORCE = -850
 const MOVE_SPEED = 450
@@ -60,7 +61,8 @@ export default function SplitWorld() {
         x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null, isDying: false, stunUntil: 0, hitAnim: null, lastHitTime: 0
     })
 
-    const p2 = useRef<PlayerState>({
+    const p2 = useRef<PlayerState & {id: string, variant: string}>({
+        id: 'player-2', variant: 'elite',
         x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null, isDying: false, stunUntil: 0, hitAnim: null, lastHitTime: 0
     })
 
@@ -211,6 +213,9 @@ export default function SplitWorld() {
 
     const isSplit = p1Realm !== p2Realm
 
+    const normalViewWidth = isSplit ? windowWidth /2 : windowWidth
+    const riftViewWidth = isSplit ? windowWidth / 2 : windowWidth
+
     if (!isClient) return <div className="w-full h-full bg-black"></div>
 
     return (
@@ -263,15 +268,14 @@ export default function SplitWorld() {
 
                 <GameView
                     cameraX={cameras.current.normal}
-                    player={p1Realm === 'normal' ? p1.current : p2.current}
-                    otherPlayer={p1Realm === 'normal' ? p2.current : p2.current}
                     buildings={normalBuildings.current}
                     isRift={false}
                     active={true}
                     screenWidthDivider={isSplit ? 2 : 1}
                     windowWidth={windowWidth}
-                    currentRealm='normal'
                 />
+
+                <GameLayer width={normalViewWidth} height={windowHeight} cameraX={cameras.current.normal} player={p1.current} enemies={[p2.current]} realm="normal" />
             </div>
 
 
@@ -284,14 +288,20 @@ export default function SplitWorld() {
                 <RealmScene realm={realms[1]} cameraOffset={cameras.current.rift} />
                 <GameView
                     cameraX={cameras.current.rift}
-                    player={p1Realm === 'rift' ? p1.current : p2.current}
-                    otherPlayer={p1Realm === 'rift' ? p2.current : p1.current}
                     buildings={riftBuildings.current}
                     isRift={true}
                     active={true}
                     screenWidthDivider={isSplit ? 2 : 1}
                     windowWidth={windowWidth}
-                    currentRealm='rift'
+                />
+
+                <GameLayer
+                    width={riftViewWidth}
+                    height={windowHeight}
+                    cameraX={cameras.current.rift}
+                    player={p1.current}
+                    enemies={[p2.current]}
+                    realm="rift"
                 />
             </div>
 
@@ -369,7 +379,7 @@ function PlayerHud({ player, name, level, color, align, isMe }: any) {
     )
 }
 
-export function GameView({ cameraX, player, otherPlayer, buildings, isRift, active, screenWidthDivider, windowWidth, currentRealm, children }: GameViewProps) {
+export function GameView({ cameraX, buildings, isRift, active, screenWidthDivider, windowWidth, children }: GameViewProps) {
     if (!active) return null
 
 
@@ -402,32 +412,6 @@ export function GameView({ cameraX, player, otherPlayer, buildings, isRift, acti
             })}
 
             {children}
-
-            {player.realm === currentRealm && (
-                <Fighter
-                    x={player.x - offsetX}
-                    y={player.y}
-                    width={player.width}
-                    height={player.height}
-                    facingRight={player.facingRight}
-                    anim={getAnim(player)}
-                />
-            )}
-
-            {otherPlayer && otherPlayer.realm === currentRealm && <div style={{
-                position: 'absolute',
-                left: otherPlayer.x - offsetX,
-                top: otherPlayer.y,
-                width: otherPlayer.width,
-                height: otherPlayer.height,
-                backgroundColor: 'rgba(255,50,50,0.2)',
-                border: '2px solid rgba(255,50,50,0.5)'
-            }}>
-                <span className="absolute -top-6 left-0 text-[10px] text-red-400">
-                    P2
-                </span>
-            </div>}
-
         </div>
     )
 }

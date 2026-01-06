@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from "react"
 import RealmScene from "./bg/RealmScene"
 import { realms } from "@/lib/realms"
 import { GameView } from "./bg/SplitWorld"
-import Fighter from "./game/Fighter"
 import MobileControls from "./mobile/MobileControls"
 import { useSettings } from "@/context/SettingsContext"
 import { useRealmStore } from "@/store/realmStore"
@@ -18,6 +17,7 @@ import SettingsPage from "./SettingsPage"
 import TrainingHUD from "./game/TrainingHud"
 import EnemyIndicators from "./game/EnemyIndicators"
 import { Skull, Target, Timer, Trophy } from "lucide-react"
+import GameLayer from "./game/GameLayer"
 
 
 
@@ -119,7 +119,7 @@ export default function TrainingArena() {
     const riftBuildings = useRef<Building[]>([])
 
     const p1 = useRef<PlayerState>({
-        x: 1000, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0
+        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0
     })
 
     const cameraX = useRef(0)
@@ -211,23 +211,20 @@ export default function TrainingArena() {
 
         const currentBuildingSet = normalBuildings.current
 
-        const validSpawnPoints = currentBuildingSet.filter(b => b.x > 400 && b.width > 50)
 
         for (let i = 0; i < count; i++) {
             const isBoss = i === count - 1 && waveNumber % 3 === 0
             const isElite = Math.random() > 0.7
 
-            const targetBuilding = validSpawnPoints[i % validSpawnPoints.length] || currentBuildingSet[0]
+            const spawn = getSafeSpawn(currentBuildingSet, windowHeight)
 
-            const spawnX = targetBuilding.x + (targetBuilding.width / 2) - (PLAYER_W / 2)
-            const groundY = windowHeight - targetBuilding.height
-            const spawnY = groundY - PLAYER_H
+            const randomOffsetX = (Math.random() * 40) - 20
 
             const maxHp = isBoss ? 500 : (isElite ? 200 : 100)
             spawnQueue.current.push({
-                id: `enemy-${waveNumber}-${i}-${Date.now()}`,
-                x: spawnX,
-                y: spawnY,
+                id: crypto.randomUUID(),
+                x: spawn.x + randomOffsetX,
+                y: spawn.y,
                 vx: 0,
                 vy: 0,
                 width: PLAYER_W,
@@ -653,19 +650,25 @@ export default function TrainingArena() {
                 <RealmScene realm={realms[0]} cameraOffset={camera.current.normal} />
                 <GameView
                     cameraX={camera.current.normal}
-                    player={p1.current}
-                    otherPlayer={null}
                     buildings={normalBuildings.current}
                     isRift={false}
                     active={true}
                     screenWidthDivider={p1Realm === 'normal' ? 1 : 2}
                     windowWidth={windowWidth}
-                    currentRealm='normal'
                 >
                     {enemies.filter(e => !e.isDead && e.realm === 'normal').map(enemy => (
-                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.normal} windowWidth={windowWidth} screenWidthDivider={p1Realm === 'normal' ? 1 : 2} />
+                        <EnemyHpBar key={enemy.id} enemy={enemy} cameraX={camera.current.normal} windowWidth={windowWidth} screenWidthDivider={p1Realm === 'normal' ? 1 : 2} />
                     ))}
                 </GameView>
+
+                <GameLayer 
+                    width={p1Realm === 'normal' ? windowWidth : windowWidth /2}
+                    height={windowHeight}
+                    cameraX={camera.current.normal}
+                    player={p1.current}
+                    enemies={enemies}
+                    realm="normal"
+                />
             </div>
 
 
@@ -673,19 +676,21 @@ export default function TrainingArena() {
                 <RealmScene realm={realms[1]} cameraOffset={camera.current.rift} />
                 <GameView
                     cameraX={camera.current.rift}
-                    player={p1.current}
-                    otherPlayer={null}
                     buildings={riftBuildings.current}
                     isRift={true}
                     active={true}
                     screenWidthDivider={2}
                     windowWidth={windowWidth}
-                    currentRealm='rift'
-                >
-                    {enemies.filter(e => !e.isDead && e.realm === 'rift').map(enemy => (
-                        <EnemyRenderer key={enemy.id} enemy={enemy} cameraX={camera.current.rift} windowWidth={windowWidth} screenWidthDivider={2} />
-                    ))}
-                </GameView>
+                />
+
+                <GameLayer 
+                    width={windowWidth / 2}
+                    height={windowHeight}
+                    cameraX={camera.current.rift}
+                    player={p1.current}
+                    enemies={enemies}
+                    realm="rift"
+                />
             </div>
 
 
@@ -711,7 +716,7 @@ export default function TrainingArena() {
 }
 
 
-function EnemyRenderer({ enemy, cameraX, windowWidth, screenWidthDivider = 1 }: { enemy: Enemy, cameraX: number, windowWidth: number, screenWidthDivider?: number }): React.ReactNode {
+function EnemyHpBar({ enemy, cameraX, windowWidth, screenWidthDivider = 1 }: { enemy: Enemy, cameraX: number, windowWidth: number, screenWidthDivider?: number }): React.ReactNode {
 
     const offset = cameraX - (windowWidth / screenWidthDivider) / 2
     const relativeX = enemy.x - offset
@@ -731,16 +736,6 @@ function EnemyRenderer({ enemy, cameraX, windowWidth, screenWidthDivider = 1 }: 
                     </div>
                 </div>
             )}
-
-            <Fighter
-                x={relativeX}
-                y={enemy.y}
-                width={enemy.width}
-                height={enemy.height}
-                facingRight={enemy.facingRight}
-                anim={getAnim(enemy)}
-                variant={enemy.variant}
-            />
         </div>
     )
 }
