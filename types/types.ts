@@ -93,14 +93,26 @@ export interface MobileLayout {
     actionY: number
 }
 
+export type AudioSettings = {
+    masterVolume: number
+    musicVolume: number
+    sfxVolume: number
+    muteOnBlur: boolean
+    musicTrack: string
+}
+
 export interface SettingsContextType {
     keybinds: Keybinds
     setKeybind: (action: keyof Keybinds, key: string) => void
     mobileLayout: MobileLayout
     setMobileLayout: (layout: MobileLayout) => void
+    audio: AudioSettings
+    setAudioSetting: <K extends keyof AudioSettings>(key: K, value: AudioSettings[K]) => void
     isEditingHud: boolean
     setEditingHud: (v: boolean) => void
     resetDefaults: () => void
+    saveSettings: () => void
+    hasUnsavedChanges: boolean
 }
 
 export interface GameLayerProps {

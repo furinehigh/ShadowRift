@@ -23,10 +23,11 @@ class AudioController {
         }
     }
 
-    updateVolume(master: number, music: number, sfx: number) {
+    updateVolumeSettings(master: number, music: number, sfx: number, muteOnBlur: boolean) {
         this.masterVolume = master / 100
         this.musicVolume = music / 100
         this.sfxVolume = sfx / 100
+        this.muted = muteOnBlur
 
         if (this.music) {
             this.music.volume = this.masterVolume * this.musicVolume
