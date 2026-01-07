@@ -1,5 +1,6 @@
 import { Building, PlayerState } from "@/types/types"
 import { useEffect, useState } from "react"
+import { audioController } from "./audioController"
 
 const CLIMB_SPEED = 6
 const WALL_SLIDE_SPEED = 50
@@ -9,9 +10,7 @@ const PLAYER_H = 70
 
 
 export const playSound = (type: 'jump' | 'rift' | 'land' | 'climb' | 'death') => {
-    // const audio = new Audio(`/sfx/${type}.mp3`)
-    // audio.volume = 0.5
-    // audio.play().catch(() => {})
+    audioController.playSFX(type)
 }
 
 
