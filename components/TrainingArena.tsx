@@ -473,6 +473,8 @@ export default function TrainingArena() {
 
         if (attacker.realm !== victim.realm) return
 
+        playSound('damage')
+
         const range = 30
         const hitbox = attacker.facingRight ? { x: attacker.x + attacker.width, y: attacker.y, width: range, height: attacker.height } : { x: attacker.x - range, y: attacker.y, width: range, height: attacker.height }
 
