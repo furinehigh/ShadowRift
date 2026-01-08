@@ -18,6 +18,7 @@ import TrainingHUD from "./game/TrainingHud"
 import EnemyIndicators from "./game/EnemyIndicators"
 import { Skull, Target, Timer, Trophy } from "lucide-react"
 import GameLayer from "./game/GameLayer"
+import { audioController } from "@/lib/audioController"
 
 
 
@@ -239,7 +240,12 @@ export default function TrainingArena() {
     }
 
     useGameLoop((dt) => {
-        if (!p1.current || isPaused) return
+        if (!p1.current || isPaused) {
+            audioController.stopLoop('run')
+            audioController.stopLoop('walk')
+
+            return
+        }
         const now = Date.now()
 
         if (spawnQueue.current.length > 0 && now - lastSpawnTime.current > currentSpawnDelay.current) {
@@ -293,13 +299,32 @@ export default function TrainingArena() {
                     inputs.current.punch = false
 
                     enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'punch'))
+                    playSound('punch')
                 } else if (inputs.current.kick) {
                     p1.current.attackUntil = now + 500
                     p1.current.attackAnim = 'LEG_ATTACK_1'
                     inputs.current.kick = false
                     enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'kick'))
+                    playSound('kick')
                 }
             }
+        }
+
+        const player = p1.current
+        const speed = Math.abs(player.vx)
+        const isMoving = speed > 10
+
+        if (player.isGrounded && !player.isDead && !player.isClimbing && !isStunned && isMoving) {
+            if (speed > 300) {
+                audioController.stopLoop('walk')
+                audioController.startLoop('run')
+            } else {
+                audioController.stopLoop('run')
+                audioController.startLoop('walk')
+            }
+        } else {
+            audioController.stopLoop('run')
+            audioController.stopLoop('walk')
         }
 
         if (!p1.current.isDead && !p1.current.isDying) {

@@ -16,6 +16,7 @@ import { SettingsProvider } from '@/context/SettingsContext'
 import OrientationGuard from './mobile/OrientationGuard'
 import { useGameStore } from '@/store/gameStore'
 import TrainingArena from './TrainingArena'
+import { audioController } from '@/lib/audioController'
 
 export default function StartPageWrapper() {
   return (
@@ -41,6 +42,16 @@ function StartPage() {
       setGameState('auth')
     }
   }, [])
+
+  useEffect(() => {
+    audioController.stopAllLoops()
+
+    if (gameState === 'menu' || gameState === 'auth') {
+      audioController.playMusic('menu_theme.mp3')
+    } else if (gameState === 'training' || gameState === 'playing') {
+      audioController.stopMusic()
+    }
+  }, [gameState])
 
   useEffect(() => {
     if (gameState !== 'menu') return
