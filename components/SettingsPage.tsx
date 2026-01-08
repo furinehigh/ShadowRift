@@ -80,10 +80,10 @@ export default function SettingsPage({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <div className="h-20 border-t border-white/5 bg-black/20 px-8 flex items-center justify-between">
-                        <button onClick={resetDefaults} disabled={!hasUnsavedChanges} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                        <button onClick={resetDefaults} disabled={!hasUnsavedChanges} className={`${!hasUnsavedChanges ? 'opacity-70' : 'opacity-100'} flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors`}>
                             <RotateCcw size={16} /> RESET DEFAULTS
                         </button>
-                        <button onClick={saveSettings} disabled={!hasUnsavedChanges} className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
+                        <button onClick={saveSettings} disabled={!hasUnsavedChanges} className={`${!hasUnsavedChanges ? 'opacity-70' : 'opacity-100'} px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95`}>
                             <span className="flex items-center gap-2 skew-x-[10deg]">
                                 <Save size={18} /> APPLY CHANGES
                             </span>
@@ -100,7 +100,7 @@ function SidebarItem({ active, icon, label, onClick, disabled = false }: any) {
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-mono tracking-wider transition-all duration-200 text-gray-400`}
+            className={`${!hasUnsavedChanges ? 'opacity-70' : 'opacity-100'} w-full flex items-center gap-4 px-6 py-4 text-sm font-mono tracking-wider transition-all duration-200 text-gray-400`}
         >
             <span className={active ? 'text-purple-400' : ''}>{icon}</span>
             {label}
