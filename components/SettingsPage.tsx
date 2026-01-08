@@ -7,8 +7,8 @@ import { ModalShell } from "./modals/ModalShell"
 import { useSettings } from "@/context/SettingsContext"
 
 const MUSIC_TRACKS = [
-    {id: 'cyber-city.mp3', name: 'Cyber City'},
-    {id: 'neon-draft.mp3', name: 'Neon Drift'},
+    {id: 'city-drums.mp3', name: 'City Drums'},
+    {id: 'neon-drift.mp3', name: 'Neon Drift'},
     {id: 'void-echo.mp3', name: 'Void Echo'}
 ]
 
