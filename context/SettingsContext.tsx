@@ -115,6 +115,7 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
         setKeybinds(defaultKeybinds)
         setMobileLayoutState(defaultMobileLayout)
         setAudio(defaultAudio)
+        setHasUnsavedChanges(false)
     }
 
     const saveSettings = () => {
