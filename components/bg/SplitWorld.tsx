@@ -275,7 +275,7 @@ export default function SplitWorld() {
                     windowWidth={windowWidth}
                 />
 
-                <GameLayer width={normalViewWidth} height={windowHeight} cameraX={cameras.current.normal} player={p1.current} enemies={[p2.current]} realm="normal" />
+                {/* <GameLayer width={normalViewWidth} height={windowHeight} cameraRef={cameras} playerRef={p1} enemies={[p2.current]} realm="normal" /> */}
             </div>
 
 
@@ -295,14 +295,14 @@ export default function SplitWorld() {
                     windowWidth={windowWidth}
                 />
 
-                <GameLayer
+                {/* <GameLayer
                     width={riftViewWidth}
                     height={windowHeight}
                     cameraX={cameras.current.rift}
                     player={p1.current}
                     enemies={[p2.current]}
                     realm="rift"
-                />
+                /> */}
             </div>
 
             <MobileControls
@@ -402,9 +402,7 @@ export function GameView({ cameraX, buildings, isRift, active, screenWidthDivide
                     }} >
                         <div>
                             {Array.from({ length: Math.floor(b.height / 30) }).map((_, i) => (
-                                <div key={i} className="w-2 h-3 bg-yellow-100/20" style={{
-                                    visibility: Math.random() > 0.6 ? 'visible' : 'hidden'
-                                }} />
+                                <div key={i} className="w-2 h-3"  />
                             ))}
                         </div>
                     </div>
