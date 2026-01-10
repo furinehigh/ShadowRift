@@ -21,6 +21,7 @@ import GameLayer from "./game/GameLayer"
 import { audioController } from "@/lib/audioController"
 
 
+const MAX_AUDIBLE_DISTANCE = 1000
 
 const ENEMY_SPEED = {
     grunt: 240,
@@ -127,6 +128,13 @@ export default function TrainingArena() {
 
     const camera = useRef({ normal: 0, rift: 0 })
     const inputs = useRef({ left: false, right: false, jump: false, kick: false, punch: false })
+
+    const getSpatialVolume = (targetX: number) => {
+        if (!p1.current) return 0
+        const distance = Math.abs(p1.current.x - targetX)
+        const volume = Math.max(0, 1 - (distance / MAX_AUDIBLE_DISTANCE))
+        return volume
+    }
 
     useEffect(() => {
         normalBuildings.current = generateSkyline('normal')
@@ -261,7 +269,8 @@ export default function TrainingArena() {
                 setEnemies(prev => [...prev, newEnemy])
                 lastSpawnTime.current = now
                 currentSpawnDelay.current = getSpawnDelay(wave)
-                playSound('rift')
+                const enemyVol = getSpatialVolume(newEnemy.x)
+                playSound('rift', enemyVol)
             }
         }
 
@@ -285,7 +294,7 @@ export default function TrainingArena() {
                 if (inputs.current.jump && p1.current.isGrounded) {
                     p1.current.vy = JUMP_FORCE
                     inputs.current.jump = false
-                    playSound('jump')
+                    playSound('jump', 1.0)
                 }
             } else if (p1.current.isClimbing && !isStunned) {
                 if (inputs.current.jump) {
@@ -294,7 +303,7 @@ export default function TrainingArena() {
 
                     p1.current.isClimbing = false
                     inputs.current.jump = false
-                    playSound('jump')
+                    playSound('jump', 1.0)
                 }
             }
 
@@ -305,13 +314,13 @@ export default function TrainingArena() {
                     inputs.current.punch = false
 
                     enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'punch'))
-                    playSound('punch')
+                    playSound('punch', 1.0)
                 } else if (inputs.current.kick) {
                     p1.current.attackUntil = now + 500
                     p1.current.attackAnim = 'LEG_ATTACK_1'
                     inputs.current.kick = false
                     enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'kick'))
-                    playSound('kick')
+                    playSound('kick', 1.0)
                 }
             }
         }
@@ -348,18 +357,20 @@ export default function TrainingArena() {
         }
 
 
-        updatePhysics(p1.current, dt, playerBuildings, windowHeight)
+        updatePhysics(p1.current, dt, playerBuildings, windowHeight, 1.0)
         cameraX.current = p1.current.x
 
         setEnemies(prev => {
             const updated = prev.map(enemy => {
                 if (enemy.isDead) return enemy
 
+                const enemyVol = getSpatialVolume(enemy.x)
+
                 const botBuildings = enemy.realm === 'normal' ? normalBuildings.current : riftBuildings.current
                 const now = Date.now()
 
                 if (enemy.isDying) {
-                    updatePhysics(enemy, dt, botBuildings, windowHeight)
+                    updatePhysics(enemy, dt, botBuildings, windowHeight, enemyVol)
                     if (enemy.y > windowHeight + 200) enemy.isDead = true
 
                     return { ...enemy }
@@ -367,7 +378,7 @@ export default function TrainingArena() {
 
                 if (now < enemy.stunUntil) {
                     enemy.vx = 0
-                    updatePhysics(enemy, dt, botBuildings, windowHeight)
+                    updatePhysics(enemy, dt, botBuildings, windowHeight, enemyVol)
                     return { ...enemy }
                 }
 
@@ -381,7 +392,7 @@ export default function TrainingArena() {
                         enemy.lastRiftSwitch = now
                         enemy.realm = enemy.realm === 'normal' ? 'rift' : 'normal'
                         enemy.isClimbing = false
-                        playSound('rift')
+                        playSound('rift', enemyVol)
                     }
                 }
 
@@ -400,6 +411,7 @@ export default function TrainingArena() {
                     }
                     if (botInputs.jump && enemy.isGrounded) {
                         enemy.vy = JUMP_FORCE
+                        playSound('jump', enemyVol)
                     }
                 }
 
@@ -479,7 +491,7 @@ export default function TrainingArena() {
 
         if (attacker.realm !== victim.realm) return
 
-        playSound('damage')
+        // playSound('damage')
 
         const range = 30
         const hitbox = attacker.facingRight ? { x: attacker.x + attacker.width, y: attacker.y, width: range, height: attacker.height } : { x: attacker.x - range, y: attacker.y, width: range, height: attacker.height }
@@ -494,6 +506,9 @@ export default function TrainingArena() {
         const overlap = hitbox.x < victimBox.x + victimBox.width && hitbox.x + hitbox.width > victimBox.x && hitbox.y < victimBox.y + victimBox.height && hitbox.y + hitbox.height > victimBox.y
 
         if (!overlap) return
+
+        const hitVol = isVictimPlayer ? 1.0 : getSpatialVolume(victim.x)
+        playSound('damage', hitVol)
 
         let damage = 0
         if (isVictimPlayer) {
@@ -519,7 +534,7 @@ export default function TrainingArena() {
             if (isVictimPlayer) {
                 handlePlayerDeath()
             } else {
-                playSound('death')
+                playSound('death', hitVol)
                 const pts = SCORE_VALUES[victim.variant as keyof typeof SCORE_VALUES] || 100
                 setScore(s => s + pts)
                 setKills(k => k + 1)
@@ -531,10 +546,10 @@ export default function TrainingArena() {
         if (isVictimPlayer) {
             setPlayerHp(victim.hp)
             p1.current.lastHitTime = Date.now()
-            playSound('land')
+            playSound('land', 1.0)
         } else {
             victim.lastHitTime = Date.now()
-            playSound('land')
+            playSound('land', hitVol)
         }
     }
 

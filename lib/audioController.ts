@@ -92,9 +92,9 @@ class AudioController {
         }
     }
 
-    playSFX(type: SountType) {
-        const effectiveVolume = this.masterVolume * this.sfxVolume
-        if (effectiveVolume <= 0) return
+    playSFX(type: SountType, volume: number = 1.0) {
+        const effectiveVolume = this.masterVolume * this.sfxVolume * volume
+        if (effectiveVolume <= 0.01) return
 
         let pool = this.sfxPool.get(type)
         if (!pool) {
@@ -105,7 +105,7 @@ class AudioController {
 
         let audio = pool.find(a => a.ended || a.paused)
         if (!audio) {
-            if (pool.length >= 5) return
+            if (pool.length >= 10) return
             audio = new Audio(`/sound/sfx/${type}.mp3`)
             pool.push(audio)
         }

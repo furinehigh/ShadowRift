@@ -9,8 +9,8 @@ const PLAYER_W = 30
 const PLAYER_H = 70
 
 
-export const playSound = (type: SountType) => {
-    audioController.playSFX(type)
+export const playSound = (type: SountType, volume: number = 1.0) => {
+    audioController.playSFX(type, volume)
 }
 
 
@@ -69,7 +69,7 @@ export const getSafeSpawn = (buildings: Building[], floorY: number) => {
     return safe[Math.floor(Math.random() * safe.length)]
 }
 
-export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[], windowHeight: number) => {
+export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[], windowHeight: number, soundVolume: number = 1.0) => {
 
     const isFallingOff = p.y > windowHeight
 
@@ -139,7 +139,7 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
 
             p.x = wallX
 
-            playSound('climb')
+            playSound('climb', soundVolume)
             return
         }
 
