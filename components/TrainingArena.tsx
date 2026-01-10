@@ -195,10 +195,16 @@ export default function TrainingArena() {
         queueWave(1)
     }
 
-    const handlePlayerDeath = () => {
+    const handlePlayerDeath = (fall?: boolean) => {
         if (isGameOver) return
 
-        playSound('death')
+        if (fall) {
+            playSound('fall-death')
+        } else {
+
+            playSound('death')
+        }
+
         p1.current.isDying = true
         setIsGameOver(true)
         setRespawnTimer(5)
@@ -435,7 +441,7 @@ export default function TrainingArena() {
         }
 
         if ((p1.current.hp <= 0 || p1.current.y > windowHeight + 200) && !p1.current.isDying && !p1.current.isDead) {
-            handlePlayerDeath()
+            handlePlayerDeath(true)
         }
 
         if (p1.current.realm === 'normal') {
