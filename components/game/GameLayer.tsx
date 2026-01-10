@@ -5,7 +5,7 @@ import { Application, Assets, ColorMatrixFilter, Container, Ticker } from 'pixi.
 import { PixiFactory } from '@md5crypt/dragonbones-pixi'
 import { GameLayerProps, PlayerState } from '@/types/types'
 import { loadGameAssets } from '@/lib/assetLoader'
-import { getAnim } from '@/lib/game-utils'
+import { applyVariantStyle, getAnim } from '@/lib/game-utils'
 
 const ONE_SHOT_ANIMS = ['JUMPS', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH']
 const FAST_ANIMS = ['PUNCH', 'LEG_ATTACK_1', 'RUN']
@@ -123,25 +123,22 @@ export default function GameLayer({ width, height, cameraRef, playerRef, enemies
                     armatures.set(id, armature)
 
                     if (isEnemy) {
-                        const variant = entity.variant
-                        if (variant === 'grunt') armature.tint = 0xFF7777
-                        else if (variant === 'elite') armature.tint = 0xFFD700
-                        else if (variant === 'boss') {
-                            armature.tint = 0xAA20FF
-                            const filter = new ColorMatrixFilter()
-                            filter.brightness(1.1, false)
-                            armature.filters = [filter]
-                        }
+                        applyVariantStyle(armature, entity.variant)
                     } else {
-                        armature.tint = 0xFFFFFF
+                        applyVariantStyle(armature)
                     }
                 }
 
                 armature.x = entity.x + (entity.width / 2)
                 armature.y = entity.y + entity.height
 
-                const absScale = Math.abs(armature.scale.x)
-                armature.scale.x = entity.facingRight ? absScale : -absScale
+                const baseScale = 0.02
+                let scale = baseScale
+
+                if (isEnemy && entity.variant === 'boss') scale = baseScale * 1.15
+                const sign = entity.facingRight ? 1 : -1
+                
+                armature.scale.set(scale * sign, scale)
 
                 const animName = getAnim(entity)
 

@@ -1,6 +1,7 @@
 import { Building, PlayerState } from "@/types/types"
 import { useEffect, useState } from "react"
 import { audioController, SountType } from "./audioController"
+import { ColorMatrixFilter } from "pixi.js"
 
 const CLIMB_SPEED = 6
 const WALL_SLIDE_SPEED = 50
@@ -40,10 +41,10 @@ export function useWindowSize() {
 
 
 export function getAnim(p: PlayerState) {
-    if (p.isDying || (p.hp <= 0 && !p.isDead) ) return 'DEATH'
-    
+    if (p.isDying || (p.hp <= 0 && !p.isDead)) return 'DEATH'
+
     if (p.isClimbing) return 'CLIMB'
-    if (Date.now() < p.stunUntil && p.hitAnim){
+    if (Date.now() < p.stunUntil && p.hitAnim) {
         return p.hitAnim
     }
 
@@ -76,7 +77,7 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
     if ((p.isDead || p.isDying) && !isFallingOff) return
 
     const isStunned = Date.now() < p.stunUntil
-    
+
     const floorY = windowHeight
 
     // const prevX = p.x
@@ -90,7 +91,7 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
         if (Math.abs(p.y - p.climbTargetY!) < 2) {
             p.y = p.climbTargetY
 
-            
+
             p.vy = 0
             p.isClimbing = false
             p.isGrounded = true
@@ -143,7 +144,7 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
             return
         }
 
-        if ( (nearLeftEdge || nearRightEdge)) {
+        if ((nearLeftEdge || nearRightEdge)) {
 
             touchingWall = true
             p.vx = 0
@@ -153,7 +154,7 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
     }
 
     p.vy += GRAVITY * dt
-    
+
     if (touchingWall && p.vy > WALL_SLIDE_SPEED) {
         p.vy = WALL_SLIDE_SPEED
     }
@@ -205,50 +206,89 @@ export const updatePhysics = (p: PlayerState, dt: number, buildings: Building[],
 }
 
 export const generateSkyline = (type: 'normal' | 'rift'): Building[] => {
-        const buildings: Building[] = []
-        let currentX = 0
-        const count = 50
+    const buildings: Building[] = []
+    let currentX = 0
+    const count = 50
 
 
-        buildings.push({
-            id: `start-plat`,
-            x: 100,
-            y: 0,
-            width: 400,
-            height: 200,
-            type,
-            color: type === "rift" ? '#4a1d96' : '#2d3748'
-        })
+    buildings.push({
+        id: `start-plat`,
+        x: 100,
+        y: 0,
+        width: 400,
+        height: 200,
+        type,
+        color: type === "rift" ? '#4a1d96' : '#2d3748'
+    })
 
-        currentX = 500
+    currentX = 500
 
-        for (let i = 0; i < count; i++) {
-            const isGap = Math.random() > 0.8
-            const gapSize = isGap ? 40 + Math.random() * 40 : 0
+    for (let i = 0; i < count; i++) {
+        const isGap = Math.random() > 0.8
+        const gapSize = isGap ? 40 + Math.random() * 40 : 0
 
-            if (isGap) {
-                currentX += gapSize
-            }
-
-            const width = 100 + Math.random() * 200
-            const height = 100 + Math.random() * 300
-
-            const tint = type === 'rift' ? `hsl(${260 + Math.random() * 40}, 70%, ${40 + Math.random() * 20}%)` : `hsl(${230 + Math.random() * 10}, 40%, ${30 + Math.random() * 20}%)`
-
-            buildings.push({
-                id: `${type}-${i}`,
-                x: currentX,
-                y: 0,
-                width,
-                height,
-                type,
-                color: tint
-            })
-
-            currentX += width + (Math.random() * 20)
+        if (isGap) {
+            currentX += gapSize
         }
 
-        return buildings
+        const width = 100 + Math.random() * 200
+        const height = 100 + Math.random() * 300
+
+        const tint = type === 'rift' ? `hsl(${260 + Math.random() * 40}, 70%, ${40 + Math.random() * 20}%)` : `hsl(${230 + Math.random() * 10}, 40%, ${30 + Math.random() * 20}%)`
+
+        buildings.push({
+            id: `${type}-${i}`,
+            x: currentX,
+            y: 0,
+            width,
+            height,
+            type,
+            color: tint
+        })
+
+        currentX += width + (Math.random() * 20)
     }
 
-    
+    return buildings
+}
+
+export const applyVariantStyle = (armature: any, variant?: string) => {
+    const children = armature.children || []
+
+    for (let i = 0; i < children.length; i++) {
+        const c: any = children[i];
+        if (c && typeof c.tint !== 'undefined') c.tint = 0xFFFFFF
+    }
+
+    armature.filters = null
+
+    if (!variant) return
+
+    if (variant === 'grunt') {
+        for (let i = 0; i < children.length; i++) {
+            const c: any = children[i];
+            if (c && typeof c.tint !== 'undefined') c.tint = 0xFF7777
+        }
+        return
+    }
+
+    if (variant === 'elite') {
+        for (let i = 0; i < children.length; i++) {
+            const c: any = children[i];
+            if (c && typeof c.tint !== 'undefined') c.tint = 0xFFD700
+        }
+        return
+
+    }
+
+    if (variant === 'boss') {
+        for (let i = 0; i < children.length; i++) {
+            const c: any = children[i];
+            if (c && typeof c.tint !== 'undefined') c.tint = 0xAA20FF
+        }
+
+        const filter = new ColorMatrixFilter()
+        filter.brightness(1.15, false)
+        armature.filters = [filter]
+    }
+}
