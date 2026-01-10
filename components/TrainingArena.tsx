@@ -91,6 +91,7 @@ interface Enemy extends PlayerState {
     lastHitTime: number
     deathTime?: number
     isAwake?: boolean
+    fadeDone?: boolean
 }
 
 interface HighScore {
@@ -394,7 +395,7 @@ export default function TrainingArena() {
 
         for (let i = 0; i < arr.length; i++) {
             const enemy = arr[i];
-            if (enemy.isDead) {
+            if (enemy.fadeDone) {
                 arr.splice(i, 1)
                 continue
             }

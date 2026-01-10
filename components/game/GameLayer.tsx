@@ -10,6 +10,12 @@ import { getAnim } from '@/lib/game-utils'
 const ONE_SHOT_ANIMS = ['JUMPS', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH']
 const FAST_ANIMS = ['PUNCH', 'LEG_ATTACK_1', 'RUN']
 
+const DEATH_FADE_SPEED = 0.02
+
+const markCleanup = (armature: any) => {
+    armature.__cleanup = true
+}
+
 class ArmaturePool {
     private pool: any[] = []
     private factory: any
@@ -23,11 +29,13 @@ class ArmaturePool {
             const armature = this.pool.pop()
             armature.visible = true
             armature.alpha = 1
+            armature.__cleanup = false
             return armature
         }
 
         const armature = this.factory.buildArmatureDisplay('Armature')
         armature.scale.set(0.02)
+        armature.__cleanup = false
         return armature
     }
 
@@ -35,6 +43,7 @@ class ArmaturePool {
         armature.visible = false
         armature.filters = null
         armature.animation.stop()
+        armature.__cleanup = false
         this.pool.push(armature)
     }
 }
@@ -48,7 +57,6 @@ export default function GameLayer({ width, height, cameraRef, playerRef, enemies
     const gameStateRef = useRef({ playerRef, enemiesRef, cameraRef, realm, width })
 
     const activeArmatures = useRef<Map<string, any>>(new Map())
-    // const stageContainerRef = useRef<Container | null>(null)
     const poolRef = useRef<ArmaturePool | null>(null)
 
     useEffect(() => {
@@ -129,7 +137,15 @@ export default function GameLayer({ width, height, cameraRef, playerRef, enemies
                     }
                 }
 
-                if (entity.isDead) {
+                armature.x = entity.x + (entity.width / 2)
+                armature.y = entity.y + entity.height
+
+                const absScale = Math.abs(armature.scale.x)
+                armature.scale.x = entity.facingRight ? absScale : -absScale
+
+                const animName = getAnim(entity)
+
+                if (entity.isDead || entity.isDying || getAnim(entity) === 'DEATH') {
                     const animName = 'DEATH'
 
                     if (armature.animation.lastAnimationName !== animName) {
@@ -139,42 +155,28 @@ export default function GameLayer({ width, height, cameraRef, playerRef, enemies
                     }
 
                     if (armature.animation.isCompleted) {
-                        armature.alpha -= 0.02
+                        armature.alpha -= DEATH_FADE_SPEED
 
                         if (armature.alpha <= 0) {
+                            armature.alpha = 0
                             armature.visible = false
+                            armature.__cleanup = true
+
+                            if (isEnemy) entity.fadeDone = true
                         }
                     }
-                } else {
-                    armature.alpha = 1
+
+                    return
                 }
+                armature.alpha = 1
+                armature.visible = true
+                armature.__cleanup = false
 
-                armature.x = entity.x + (entity.width / 2)
-                armature.y = entity.y + entity.height
-
-                const absScale = Math.abs(armature.scale.x)
-                armature.scale.x = entity.facingRight ? absScale : -absScale
-
-                const animName = getAnim(entity)
                 const currentAnim = armature.animation.lastAnimationName
                 const isPlaying = armature.animation.isPlaying
                 const isCompleted = armature.animation.isCompleted
 
-                if (animName === 'DEATH') {
-                    if (currentAnim === 'DEATH' && isCompleted) {
-                        armature.alpha -= 0.02
-                        if (armature.alpha <= 0) armature.visible = false
-                    }
-                } else {
-                    armature.alpha = 1
-                }
-
-                if (animName === 'DEATH' && currentAnim === 'DEATH') {
-
-
-                }
-
-                else if (currentAnim !== animName || (!isPlaying && !isCompleted)) {
+                if (currentAnim !== animName || (!isPlaying && !isCompleted)) {
                     if (armature.animation.hasAnimation(animName)) {
                         const playTimes = ONE_SHOT_ANIMS.includes(animName) ? 1 : 0
                         const state = armature.animation.fadeIn(animName, 0.1, playTimes)
@@ -190,37 +192,38 @@ export default function GameLayer({ width, height, cameraRef, playerRef, enemies
 
             app.ticker.add(() => {
                 const { playerRef, enemiesRef, cameraRef, realm, width } = gameStateRef.current
-                
+
                 const enemies = enemiesRef.current
                 const player = playerRef.current
-                
+
                 const camX = realm === 'normal' ? cameraRef.current.normal : cameraRef.current.rift
-                
+
                 const offset = camX - (width / 2)
                 worldContainer.position.set(-offset, 0)
 
                 validIds.clear()
-                
-                
+
+
                 if (player.realm === realm) {
                     renderEntity('player', player, false)
                 }
-                
+
                 for (let i = 0; i < enemies.length; i++) {
                     const enemy = enemies[i];
                     if (enemy.realm !== realm) continue
                     renderEntity(enemy.id, enemy, true)
                 }
-                
+
                 const armatures = activeArmatures.current
                 const pool = poolRef.current
                 if (!pool) return
                 for (const [id, armature] of armatures.entries()) {
-                    if (!validIds.has(id)) {
-                        worldContainer.removeChild(armature)
-                        pool.return(armature)
-                        armatures.delete(id)
-                    }
+                    const shouldRemove = !validIds.has(id) || armature.__cleanup === true
+                    if (!shouldRemove) continue
+                    
+                    worldContainer.removeChild(armature)
+                    pool.return(armature)
+                    armatures.delete(id)
                 }
             })
 
