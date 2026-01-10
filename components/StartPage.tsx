@@ -47,9 +47,11 @@ function StartPage() {
     audioController.stopAllLoops()
 
     if (gameState === 'menu' || gameState === 'auth') {
+      audioController.stopMusic()
       audioController.playMusic('menu_theme.mp3')
     } else if (gameState === 'training' || gameState === 'playing') {
       audioController.stopMusic()
+      audioController.playMusic('fight-bg.mp3')
     }
   }, [gameState])
 
