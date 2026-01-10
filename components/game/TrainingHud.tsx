@@ -12,12 +12,13 @@ const MAX_HP = {
     boss: 500
 }
 
-export default function TrainingHUD({ wave, enemies, player }: TrainingHUDProps) {
+export default function TrainingHUD({ wave, enemiesRef, player }: TrainingHUDProps) {
     const [username, setUsername] = useState('Unknown_fr')
     const [showWaveCleared, setShowWaveCleared] = useState(false)
 
     const prevWave = useRef(wave)
 
+    const enemies = enemiesRef.current
 
     useEffect(() => {
         if (typeof window !== 'undefined') {

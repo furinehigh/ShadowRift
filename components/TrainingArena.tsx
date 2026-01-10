@@ -4,7 +4,7 @@ import { useGameLoop } from "@/hooks/useGameLoop"
 import { calculateBotInputs } from "@/lib/aiLogic"
 import { generateSkyline, getAnim, getSafeSpawn, playSound, updatePhysics, useWindowSize } from "@/lib/game-utils"
 import { Building, PlayerState } from "@/types/types"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import RealmScene from "./bg/RealmScene"
 import { realms } from "@/lib/realms"
 import { GameView } from "./bg/SplitWorld"
@@ -67,6 +67,11 @@ const MIN_SPAWN = 2000
 const PLAYER_HEAL_DELAY = 4000
 const PLAYER_HEAL_RATE = 10
 
+const ENEMY_WAKE_DISTANCE = 800
+const ENEMY_HARD_SLEEP_DISTANCE = 1200
+
+const UI_SYNC_MS = 300
+
 const getSpawnDelay = (wave: number) => {
     const difficultyCurve = Math.max(
         MIN_SPAWN,
@@ -84,6 +89,8 @@ interface Enemy extends PlayerState {
     variant: 'grunt' | 'elite' | 'boss'
     maxHp: number
     lastHitTime: number
+    deathTime?: number
+    isAwake?: boolean
 }
 
 interface HighScore {
@@ -100,9 +107,10 @@ export default function TrainingArena() {
     const [isPaused, setIsPaused] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
 
-    const [enemies, setEnemies] = useState<Enemy[]>([])
+
     const [wave, setWave] = useState(1)
 
+    const enemiesRef = useRef<Enemy[]>([])
     const spawnQueue = useRef<Enemy[]>([])
     const lastSpawnTime = useRef(0)
     const currentSpawnDelay = useRef(BASE_SPAWN)
@@ -115,6 +123,9 @@ export default function TrainingArena() {
 
     const [respawnTimer, setRespawnTimer] = useState(5)
     const [highScores, setHighScores] = useState<HighScore[]>([])
+
+    const [camUi, setCamUi] = useState({normal: 0, rift: 0})
+    const lastCamSync = useRef(0)
 
 
     const normalBuildings = useRef<Building[]>([])
@@ -129,6 +140,8 @@ export default function TrainingArena() {
     const camera = useRef({ normal: 0, rift: 0 })
     const inputs = useRef({ left: false, right: false, jump: false, kick: false, punch: false })
 
+    const lastUiSync = useRef(0)
+
     const getSpatialVolume = (targetX: number) => {
         if (!p1.current) return 0
         const distance = Math.abs(p1.current.x - targetX)
@@ -139,14 +152,16 @@ export default function TrainingArena() {
     useEffect(() => {
         normalBuildings.current = generateSkyline('normal')
         riftBuildings.current = generateSkyline('rift')
+        setP1Realm('normal')
+        enemiesRef.current = []
+        spawnQueue.current = []
         queueWave(1)
         loadHighScore()
 
-        setP1Realm('normal')
     }, [])
 
     useEffect(() => {
-        let interval: NodeJS.Timeout
+        let interval: NodeJS.Timeout | undefined
         if (isGameOver && respawnTimer > 0) {
             interval = setInterval(() => {
                 setRespawnTimer(prev => prev - 1)
@@ -159,7 +174,7 @@ export default function TrainingArena() {
     }, [isGameOver, respawnTimer])
 
     const loadHighScore = () => {
-        const stored = localStorage.getItem('tranining_highscores')
+        const stored = localStorage.getItem('training_highscores')
         if (stored) {
             setHighScores(JSON.parse(stored))
         }
@@ -181,7 +196,8 @@ export default function TrainingArena() {
         setKills(0)
         setWave(1)
         setPlayerHp(100)
-        setEnemies([])
+
+        enemiesRef.current = []
         spawnQueue.current = []
 
         if (p1.current) {
@@ -197,6 +213,7 @@ export default function TrainingArena() {
             p1.current.isClimbing = false
             p1.current.realm = 'normal'
             p1.current.stunUntil = 0
+            p1.current.lastHitTime = Date.now()
             setP1Realm('normal')
         }
 
@@ -246,7 +263,7 @@ export default function TrainingArena() {
                 height: PLAYER_H,
                 isGrounded: false,
                 isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: maxHp, maxHp, lastHitTime: 0, isClimbing: false, climbLockX: null, climbTargetY: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null,
-                variant: isBoss ? 'boss' : (isElite ? 'elite' : 'grunt')
+                variant: isBoss ? 'boss' : (isElite ? 'elite' : 'grunt'), isAwake: false
             })
 
 
@@ -266,18 +283,20 @@ export default function TrainingArena() {
             const newEnemy = spawnQueue.current.shift()
 
             if (newEnemy) {
-                setEnemies(prev => [...prev, newEnemy])
+                enemiesRef.current.push(newEnemy)
                 lastSpawnTime.current = now
                 currentSpawnDelay.current = getSpawnDelay(wave)
+
                 const enemyVol = getSpatialVolume(newEnemy.x)
                 playSound('rift', enemyVol)
             }
         }
 
+        const player = p1.current
         const isStunned = now < p1.current.stunUntil
         const playerBuildings = p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current
 
-        if (!p1.current.isDead && !p1.current.isDying) {
+        if (!player.isDead && !player.isDying) {
 
             p1.current.vx = 0
 
@@ -307,25 +326,32 @@ export default function TrainingArena() {
                 }
             }
 
-            if (!isStunned && now > p1.current.attackUntil) {
+            if (!isStunned && now > player.attackUntil) {
                 if (inputs.current.punch) {
                     p1.current.attackUntil = now + 500
                     p1.current.attackAnim = 'PUNCH'
                     inputs.current.punch = false
 
-                    enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'punch'))
+                    const arr = enemiesRef.current
+                    for (let i = 0; i < arr.length; i++) {
+                        const e = arr[i];
+                        if (!e.isDead && e.realm === p1.current.realm) checkAttackHit(p1.current, e, false, 'punch')
+                    }
                     playSound('punch', 1.0)
                 } else if (inputs.current.kick) {
                     p1.current.attackUntil = now + 500
                     p1.current.attackAnim = 'LEG_ATTACK_1'
                     inputs.current.kick = false
-                    enemies.forEach(e => !e.isDead && e.realm === p1.current.realm && checkAttackHit(p1.current, e, false, 'kick'))
+                    const arr = enemiesRef.current
+                    for (let i = 0; i < arr.length; i++) {
+                        const e = arr[i];
+                        if (!e.isDead && e.realm === p1.current.realm) checkAttackHit(p1.current, e, false, 'kick')
+                    }
                     playSound('kick', 1.0)
                 }
             }
         }
 
-        const player = p1.current
         const speed = Math.abs(player.vx)
         const isMoving = speed > 10
 
@@ -346,7 +372,7 @@ export default function TrainingArena() {
             const timeSinceHit = now - p1.current.lastHitTime
 
             if (timeSinceHit > PLAYER_HEAL_DELAY && p1.current.hp < 100) {
-                const healAmount = PLAYER_HEAL_RATE * (dt)
+                const healAmount = PLAYER_HEAL_RATE * dt
 
                 const newHp = Math.min(100, p1.current.hp + healAmount)
 
@@ -358,108 +384,134 @@ export default function TrainingArena() {
 
 
         updatePhysics(p1.current, dt, playerBuildings, windowHeight, 1.0)
+
         cameraX.current = p1.current.x
 
-        setEnemies(prev => {
-            const updated = prev.map(enemy => {
-                if (enemy.isDead) return enemy
+        if (player.realm === 'normal') camera.current.normal = player.x
+        else camera.current.rift = player.x
 
-                const enemyVol = getSpatialVolume(enemy.x)
+        const arr = enemiesRef.current
 
-                const botBuildings = enemy.realm === 'normal' ? normalBuildings.current : riftBuildings.current
-                const now = Date.now()
+        for (let i = 0; i < arr.length; i++) {
+            const enemy = arr[i];
+            if (enemy.isDead) {
+                arr.splice(i, 1)
+                continue
+            }
 
-                if (enemy.isDying) {
-                    updatePhysics(enemy, dt, botBuildings, windowHeight, enemyVol)
-                    if (enemy.y > windowHeight + 200) enemy.isDead = true
+            const enemyVol = getSpatialVolume(enemy.x)
 
-                    return { ...enemy }
+            const botBuildings = enemy.realm === 'normal' ? normalBuildings.current : riftBuildings.current
+
+            if (enemy.isDying) {
+                updatePhysics(enemy, dt, botBuildings, windowHeight, enemyVol)
+                if (enemy.y > windowHeight + 500) {
+                    arr.splice(i, 1)
                 }
 
-                if (now < enemy.stunUntil) {
+                continue
+            }
+
+            const dx = Math.abs(enemy.x - player.x)
+            if (!enemy.isAwake) {
+                if (dx < ENEMY_WAKE_DISTANCE && enemy.realm === player.realm) enemy.isAwake = true
+                else continue
+            } else {
+                if (dx > ENEMY_WAKE_DISTANCE) {
                     enemy.vx = 0
-                    updatePhysics(enemy, dt, botBuildings, windowHeight, enemyVol)
-                    return { ...enemy }
+                    enemy.isAwake = false
+                    continue
                 }
+            }
 
-                const botInputs = calculateBotInputs(enemy, p1.current, botBuildings, dt)
-
+            if (now < enemy.stunUntil) {
                 enemy.vx = 0
+                updatePhysics(enemy, dt, botBuildings, windowHeight, enemyVol)
+                continue
+            }
 
-                if (botInputs.rift) {
-                    const canRift = now - enemy.lastRiftSwitch > RIFT_COOLDOWN
-                    if (canRift) {
-                        enemy.lastRiftSwitch = now
-                        enemy.realm = enemy.realm === 'normal' ? 'rift' : 'normal'
-                        enemy.isClimbing = false
-                        playSound('rift', enemyVol)
+            const botInputs = calculateBotInputs(enemy, p1.current, botBuildings, dt)
+
+            enemy.vx = 0
+
+            if (botInputs.rift) {
+                const canRift = now - enemy.lastRiftSwitch > RIFT_COOLDOWN
+                if (canRift) {
+                    enemy.lastRiftSwitch = now
+                    enemy.realm = enemy.realm === 'normal' ? 'rift' : 'normal'
+                    enemy.isClimbing = false
+                    playSound('rift', enemyVol)
+                }
+            }
+
+            const speed = ENEMY_SPEED[enemy.variant] || 250
+
+            if (!enemy.isClimbing) {
+
+                if (botInputs.left) {
+                    enemy.vx = -speed
+                    enemy.facingRight = false
+                }
+                if (botInputs.right) {
+                    enemy.vx = speed
+                    enemy.facingRight = true
+
+                }
+                if (botInputs.jump && enemy.isGrounded) {
+                    enemy.vy = JUMP_FORCE
+                    playSound('jump', enemyVol)
+                }
+            }
+
+
+
+            if (now > enemy.attackUntil) {
+                if (enemy.realm === p1.current.realm && !p1.current.isDying && !p1.current.isDead) {
+                    if (botInputs.punch) {
+                        enemy.attackUntil = now + 500
+                        enemy.attackAnim = 'PUNCH'
+
+                        checkAttackHit(enemy, p1.current, true, 'punch')
+                    } else if (botInputs.kick) {
+                        enemy.attackUntil = now + 500
+                        enemy.attackAnim = 'LEG_ATTACK_1'
+
+                        checkAttackHit(enemy, p1.current, true, 'kick')
+
                     }
                 }
+            }
 
-                const speed = ENEMY_SPEED[enemy.variant] || 250
+            updatePhysics(enemy, dt, botBuildings, windowHeight)
 
-                if (!enemy.isClimbing) {
+            if (enemy.y > windowHeight + 200) enemy.isDead = true
+            if (enemy.hp <= 0 && !enemy.isDying) enemy.isDying = true
+        }
 
-                    if (botInputs.left) {
-                        enemy.vx = -speed
-                        enemy.facingRight = false
-                    }
-                    if (botInputs.right) {
-                        enemy.vx = speed
-                        enemy.facingRight = true
-
-                    }
-                    if (botInputs.jump && enemy.isGrounded) {
-                        enemy.vy = JUMP_FORCE
-                        playSound('jump', enemyVol)
-                    }
-                }
-
-
-
-                if (now > enemy.attackUntil) {
-                    if (enemy.realm === p1.current.realm && !p1.current.isDying && !p1.current.isDead) {
-                        if (botInputs.punch) {
-                            enemy.attackUntil = now + 500
-                            enemy.attackAnim = 'PUNCH'
-
-                            checkAttackHit(enemy, p1.current, true, 'punch')
-                        } else if (botInputs.kick) {
-                            enemy.attackUntil = now + 500
-                            enemy.attackAnim = 'LEG_ATTACK_1'
-
-                            checkAttackHit(enemy, p1.current, true, 'kick')
-
-                        }
-                    }
-                }
-
-                updatePhysics(enemy, dt, botBuildings, windowHeight)
-
-                if (enemy.y > windowHeight + 200) enemy.isDead = true
-                // if (enemy.hp <= 0) enemy.isDead = true
-
-                return { ...enemy }
-            })
-
-            return updated
-        })
-
-        const allEnemiesDefeated = enemies.length > 0 && enemies.every(e => e.isDying || e.isDead)
+        const allEnemiesDefeated = arr.length > 0 && arr.every(e => e.isDying || e.isDead)
 
         if (allEnemiesDefeated && spawnQueue.current.length === 0) {
-            setWave(w => w + 1)
-            queueWave(wave + 1)
+            const next = wave + 1
+            setWave(next)
+            queueWave(next)
         }
 
         if ((p1.current.hp <= 0 || p1.current.y > windowHeight + 200) && !p1.current.isDying && !p1.current.isDead) {
             handlePlayerDeath(true)
         }
 
-        if (p1.current.realm === 'normal') {
-            camera.current.normal = p1.current.x
-        } else {
-            camera.current.rift = p1.current.x
+        // if (now - lastUiSync.current > UI_SYNC_MS) {
+        //     lastUiSync.current = now
+
+        //     setEnemiesUi(arr.slice())
+        // }
+
+        if (now - lastCamSync.current > 10) {
+            lastCamSync.current = now
+            setCamUi({
+                normal: camera.current.normal,
+                rift: camera.current.rift
+            })
         }
 
     })
@@ -612,7 +664,7 @@ export default function TrainingArena() {
         window.location.reload()
     }
 
-    const playerForHud = { ...p1.current, hp: playerHp }
+    const playerForHud = useMemo(() => ({ ...p1.current, hp: playerHp }), [playerHp])
 
 
     return (
@@ -695,35 +747,35 @@ export default function TrainingArena() {
             </AnimatePresence>
 
             <div className="relative h-full overflow-hidden transition-all duration-300 border-r border-white/20" style={{ width: p1Realm === 'normal' ? '100%' : '50%' }}>
-                <RealmScene realm={realms[0]} cameraOffset={camera.current.normal} />
+                <RealmScene realm={realms[0]} cameraOffset={camUi.normal} />
                 <GameView
-                    cameraX={camera.current.normal}
+                    cameraX={camUi.normal}
                     buildings={normalBuildings.current}
                     isRift={false}
                     active={true}
                     screenWidthDivider={p1Realm === 'normal' ? 1 : 2}
                     windowWidth={windowWidth}
                 >
-                    {enemies.filter(e => !e.isDead && e.realm === 'normal').map(enemy => (
-                        <EnemyHpBar key={enemy.id} enemy={enemy} cameraX={camera.current.normal} windowWidth={windowWidth} screenWidthDivider={p1Realm === 'normal' ? 1 : 2} />
+                    {enemiesRef.current.filter(e => !e.isDead && e.realm === 'normal').map(enemy => (
+                        <EnemyHpBar key={enemy.id} enemy={enemy} cameraX={camUi.normal} windowWidth={windowWidth} screenWidthDivider={p1Realm === 'normal' ? 1 : 2} />
                     ))}
                 </GameView>
 
-                <GameLayer 
-                    width={p1Realm === 'normal' ? windowWidth : windowWidth /2}
+                <GameLayer
+                    width={p1Realm === 'normal' ? windowWidth : windowWidth / 2}
                     height={windowHeight}
-                    cameraX={camera.current.normal}
-                    player={p1.current}
-                    enemies={enemies}
+                    cameraRef={camera}
+                    playerRef={p1}
+                    enemiesRef={enemiesRef}
                     realm="normal"
                 />
             </div>
 
 
             <div className="relative h-full overflow-hidden transition-all duration-300" style={{ width: p1Realm === 'rift' ? '50%' : '0%', opacity: 1 }}>
-                <RealmScene realm={realms[1]} cameraOffset={camera.current.rift} />
+                <RealmScene realm={realms[1]} cameraOffset={camUi.rift} />
                 <GameView
-                    cameraX={camera.current.rift}
+                    cameraX={camUi.rift}
                     buildings={riftBuildings.current}
                     isRift={true}
                     active={true}
@@ -731,19 +783,19 @@ export default function TrainingArena() {
                     windowWidth={windowWidth}
                 />
 
-                <GameLayer 
+                <GameLayer
                     width={windowWidth / 2}
                     height={windowHeight}
-                    cameraX={camera.current.rift}
-                    player={p1.current}
-                    enemies={enemies}
+                    cameraRef={camera}
+                    playerRef={p1}
+                    enemiesRef={enemiesRef}
                     realm="rift"
                 />
             </div>
 
 
-            <TrainingHUD wave={wave} enemies={enemies} player={playerForHud} />
-            <EnemyIndicators enemies={enemies} player={p1.current} width={windowWidth} height={windowHeight} />
+            <TrainingHUD wave={wave} enemiesRef={enemiesRef} player={playerForHud} />
+            <EnemyIndicators enemiesRef={enemiesRef} player={p1.current} width={windowWidth} height={windowHeight} />
 
             <MobileControls
                 onJump={() => inputs.current.jump = true}

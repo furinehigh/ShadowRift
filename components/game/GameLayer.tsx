@@ -10,14 +10,56 @@ import { getAnim } from '@/lib/game-utils'
 const ONE_SHOT_ANIMS = ['JUMPS', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH']
 const FAST_ANIMS = ['PUNCH', 'LEG_ATTACK_1', 'RUN']
 
-export default function GameLayer({ width, height, cameraX, player, enemies, realm }: GameLayerProps) {
+class ArmaturePool {
+    private pool: any[] = []
+    private factory: any
+
+    constructor(factory: any) {
+        this.factory = factory
+    }
+
+    get(): any {
+        if (this.pool.length > 0) {
+            const armature = this.pool.pop()
+            armature.visible = true
+            armature.alpha = 1
+            return armature
+        }
+
+        const armature = this.factory.buildArmatureDisplay('Armature')
+        armature.scale.set(0.02)
+        return armature
+    }
+
+    return(armature: any) {
+        armature.visible = false
+        armature.filters = null
+        armature.animation.stop()
+        this.pool.push(armature)
+    }
+}
+
+
+export default function GameLayer({ width, height, cameraRef, playerRef, enemiesRef, realm }: GameLayerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const appRef = useRef<Application | null>(null)
     const factoryRef = useRef<any>(null)
 
+    const gameStateRef = useRef({ playerRef, enemiesRef, cameraRef, realm, width })
 
-    const armatureRef = useRef<Map<string, any>>(new Map())
-    const stageContainerRef = useRef<Container | null>(null)
+    const activeArmatures = useRef<Map<string, any>>(new Map())
+    // const stageContainerRef = useRef<Container | null>(null)
+    const poolRef = useRef<ArmaturePool | null>(null)
+
+    useEffect(() => {
+        gameStateRef.current = { playerRef, enemiesRef, cameraRef, realm, width }
+    }, [playerRef, enemiesRef, cameraRef, realm, width])
+
+    useEffect(() => {
+        if (appRef.current) {
+            appRef.current.renderer.resize(width, height)
+        }
+    }, [width, height])
 
 
     useEffect(() => {
@@ -28,19 +70,19 @@ export default function GameLayer({ width, height, cameraX, player, enemies, rea
             if (disposed) return
 
             factoryRef.current = PixiFactory.factory
+            poolRef.current = new ArmaturePool(factoryRef.current)
 
             const app = new Application({
                 width,
                 height,
                 backgroundAlpha: 0,
-                antialias: true,
-                resolution: window.devicePixelRatio || 1,
+                antialias: false,
+                resolution: Math.min(window.devicePixelRatio, 2),
                 autoDensity: true
             })
             appRef.current = app
 
             const worldContainer = new Container()
-            stageContainerRef.current = worldContainer
             app.stage.addChild(worldContainer)
 
             if (containerRef.current) {
@@ -57,6 +99,131 @@ export default function GameLayer({ width, height, cameraX, player, enemies, rea
                 })
             }
 
+
+            const validIds = new Set<string>()
+
+            const renderEntity = (id: string, entity: any, isEnemy: boolean) => {
+                validIds.add(id)
+
+                const armatures = activeArmatures.current
+                const pool = poolRef.current!
+                let armature = armatures.get(id)
+
+                if (!armature) {
+                    armature = pool.get()
+                    worldContainer.addChild(armature)
+                    armatures.set(id, armature)
+
+                    if (isEnemy) {
+                        const variant = entity.variant
+                        if (variant === 'grunt') armature.tint = 0xFF7777
+                        else if (variant === 'elite') armature.tint = 0xFFD700
+                        else if (variant === 'boss') {
+                            armature.tint = 0xAA20FF
+                            const filter = new ColorMatrixFilter()
+                            filter.brightness(1.1, false)
+                            armature.filters = [filter]
+                        }
+                    } else {
+                        armature.tint = 0xFFFFFF
+                    }
+                }
+
+                if (entity.isDead) {
+                    const animName = 'DEATH'
+
+                    if (armature.animation.lastAnimationName !== animName) {
+                        const state = armature.animation.fadeIn(animName, 0.1, 1)
+
+                        if (state) state.resetToPose = false
+                    }
+
+                    if (armature.animation.isCompleted) {
+                        armature.alpha -= 0.02
+
+                        if (armature.alpha <= 0) {
+                            armature.visible = false
+                        }
+                    }
+                } else {
+                    armature.alpha = 1
+                }
+
+                armature.x = entity.x + (entity.width / 2)
+                armature.y = entity.y + entity.height
+
+                const absScale = Math.abs(armature.scale.x)
+                armature.scale.x = entity.facingRight ? absScale : -absScale
+
+                const animName = getAnim(entity)
+                const currentAnim = armature.animation.lastAnimationName
+                const isPlaying = armature.animation.isPlaying
+                const isCompleted = armature.animation.isCompleted
+
+                if (animName === 'DEATH') {
+                    if (currentAnim === 'DEATH' && isCompleted) {
+                        armature.alpha -= 0.02
+                        if (armature.alpha <= 0) armature.visible = false
+                    }
+                } else {
+                    armature.alpha = 1
+                }
+
+                if (animName === 'DEATH' && currentAnim === 'DEATH') {
+
+
+                }
+
+                else if (currentAnim !== animName || (!isPlaying && !isCompleted)) {
+                    if (armature.animation.hasAnimation(animName)) {
+                        const playTimes = ONE_SHOT_ANIMS.includes(animName) ? 1 : 0
+                        const state = armature.animation.fadeIn(animName, 0.1, playTimes)
+
+                        if (state) {
+                            state.timeScale = FAST_ANIMS.includes(animName) ? 1.5 : 1.0
+
+                            if (animName === 'DEATH') state.resetToPose = false
+                        }
+                    }
+                }
+            }
+
+            app.ticker.add(() => {
+                const { playerRef, enemiesRef, cameraRef, realm, width } = gameStateRef.current
+                
+                const enemies = enemiesRef.current
+                const player = playerRef.current
+                
+                const camX = realm === 'normal' ? cameraRef.current.normal : cameraRef.current.rift
+                
+                const offset = camX - (width / 2)
+                worldContainer.position.set(-offset, 0)
+
+                validIds.clear()
+                
+                
+                if (player.realm === realm) {
+                    renderEntity('player', player, false)
+                }
+                
+                for (let i = 0; i < enemies.length; i++) {
+                    const enemy = enemies[i];
+                    if (enemy.realm !== realm) continue
+                    renderEntity(enemy.id, enemy, true)
+                }
+                
+                const armatures = activeArmatures.current
+                const pool = poolRef.current
+                if (!pool) return
+                for (const [id, armature] of armatures.entries()) {
+                    if (!validIds.has(id)) {
+                        worldContainer.removeChild(armature)
+                        pool.return(armature)
+                        armatures.delete(id)
+                    }
+                }
+            })
+
         }
 
         init()
@@ -64,114 +231,14 @@ export default function GameLayer({ width, height, cameraX, player, enemies, rea
 
         return () => {
             disposed = true
-            armatureRef.current.forEach(arm => arm.dispose())
-            armatureRef.current.clear()
             if (appRef.current) {
-                appRef.current.destroy(true, {children: true, texture: false})
+                appRef.current.destroy(true, { children: true, texture: false })
+                appRef.current = null
             }
+            activeArmatures.current.clear()
         }
     }, [])
 
-    useEffect(() => {
-        if (appRef.current) {
-            appRef.current.renderer.resize(width, height)
-        }
-    }, [width, height])
-
-    useEffect(() => {
-        if (!armatureRef.current || !stageContainerRef.current || !factoryRef.current) return
-
-        const world = stageContainerRef.current
-
-        const offset = cameraX - (width / 2)
-        world.position.set(-offset, 0)
-
-        const updateFighter = (id: string, entity: PlayerState | any, isEnemy: boolean) => {
-            let armature = armatureRef.current.get(id)
-
-            if (!armature) {
-                armature = factoryRef.current.buildArmatureDisplay('Armature')
-                armature.scale.set(0.02)
-                world.addChild(armature)
-                armatureRef.current.set(id, armature)
-
-                if (isEnemy) {
-                    const variant = entity.variant
-                    if (variant === 'grunt') armature.tint = 0xFF7777
-                    else if (variant === 'elite') armature.tint = 0xFFD700
-                    else if (variant === 'boss') {
-                        armature.tint = 0xAA20FF
-                        const filter = new ColorMatrixFilter()
-                        filter.brightness(1.1, false)
-                        armature.filters = [filter]
-                    }
-                }
-            }
-
-            armature.visible = true
-
-            armature.x = entity.x + (entity.width / 2)
-            armature.y = entity.y + entity.height
-
-            const absScale = Math.abs(armature.scale.x)
-            armature.scale.x = entity.facingRight ? absScale : -absScale
-
-            const animName = getAnim(entity)
-            if (armature.animation.lastAnimationName === animName && armature.animation.isPlaying) {
-                return
-
-            }
-
-            if (animName === 'DEATH' && armature.animation.lastAnimationName === 'DEATH' && armature.animation.isCompleted) {
-                return
-            }
-
-            if (armature.animation.hasAnimation(animName)) {
-                const playTimes = ONE_SHOT_ANIMS.includes(animName) ? 1: 0
-
-                const animationState = armature.animation.fadeIn(animName, 0.1, playTimes)
-
-                if (animationState) {
-                    if (FAST_ANIMS.includes(animName)) {
-                        animationState.timeScale = 1.5
-                    } else if (animName === 'DEATH') {
-                        animationState.timeScale = 1.0
-
-                        animationState.resetToPose = false
-                    } else {
-                        animationState.timeScale = 1.0
-                    }
-                }
-            }
-        }
-
-        if (player.realm === realm) {
-            updateFighter('player', player, false)
-
-        } else {
-            const p = armatureRef.current.get('player')
-            if (p) p.visible = false
-        }
-
-        const activeIds = new Set<string>()
-        if (player.realm === realm) activeIds.add('player')
-
-        enemies.forEach(enemy => {
-            if (enemy.isDead || enemy.realm !== realm) return
-
-            updateFighter(enemy.id, enemy, true)
-            activeIds.add(enemy.id)
-        })
-
-        armatureRef.current.forEach((armature, id) => {
-            if (!activeIds.has(id)) {
-                world.removeChild(armature)
-                armature.dispose()
-                armatureRef.current.delete(id)
-            }
-        })
-
-    }, [cameraX, player, enemies, realm, width])
 
     return (
         <div

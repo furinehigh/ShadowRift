@@ -1,4 +1,4 @@
-import { ReactNode } from "react"
+import { ReactNode, RefObject } from "react"
 
 export type GameState = 'initializing' | 'auth' | 'loading' | 'menu' | 'playing' | 'training'
 
@@ -118,10 +118,10 @@ export interface SettingsContextType {
 export interface GameLayerProps {
     width: number
     height: number
-    cameraX: number
-    player: PlayerState
-    enemies: any[]
+    playerRef: RefObject<PlayerState>
+    enemiesRef: RefObject<Enemy[]>
     realm: 'normal' | 'rift'
+    cameraRef: RefObject<{normal: number, rift: number}>
 }
 
 export interface BotInputs {
@@ -139,11 +139,13 @@ export interface Enemy {
     variant: 'grunt' | 'elite' | 'boss'
     isDead: boolean
     isDying: boolean
+    deathTime?: number
+    realm?: string
 }
 
 export interface TrainingHUDProps {
     wave: number
-    enemies: Enemy[]
+    enemiesRef: RefObject<Enemy[]>
     player: {
         hp: number
         lastRiftSwitch: number
