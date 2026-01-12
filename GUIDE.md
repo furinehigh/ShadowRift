@@ -17,6 +17,7 @@ NOTE: the climbing by the players are done automatically if they are pretty clos
 
 # Realm
 **Normal Realm** is the default realm/space where the player spawns and fights when game starts, but they can switch to **Rift Realm** by pressing the default button `r`. The whole purpose of the dual relm is that players can save themselves + future updates will make the rift realm more unstable and very random.
+Enemies HP isn't visible if they are in Rift realm..
 
 Note: When switching realm make sure u are on a high ground or jumping bcoz the moment u hit realm switch button your character will be spawned in the other realm at the same point which might cause your player be spawned inside a building and then it will fall... death :( - give it a try...
 
