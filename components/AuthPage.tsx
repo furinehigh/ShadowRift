@@ -75,18 +75,18 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
 
             <div className="absolute inset-0 z-50 flex items-center justify-around p-4">
                 <div className="flex flex-col">
-                    <h1 className="text-5xl font-bold mb-3">
+                    <h1 className="text-2xl md:text-5xl font-bold mb-3">
                         WELCOME!
                     </h1>
-                    <h1 className="text-3xl ">
+                    <h1 className="text-md md:text-3xl ">
                         BUT BEFORE YOU START PLAYING.
                     </h1>
-                    <p className="text-purple-400 text-xs tracking-[0.5rem] mt-2">CHOOSE YOUR FATE.</p>
+                    <p className="text-purple-400 text-[10px] md:text-xs tracking-[0.5rem] mt-2">CHOOSE YOUR FATE.</p>
                 </div>
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="w-full max-w-md bg-[#0f0f1a]/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-2xl"
+                    className="w-full max-w-xs md:max-w-md bg-[#0f0f1a]/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-2xl max-h-screen"
                 >
                     <div className="flex border-b border-white/5">
                         <button onClick={() => {
@@ -105,7 +105,7 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
                     </div>
 
 
-                    <div className="p-8">
+                    <div className="p-4 md:p-8">
                         <AnimatePresence mode="wait">
                             {mode === 'register' ? (
                                 <motion.form
@@ -114,28 +114,28 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
                                     animate={{ x: 0, opacity: 1 }}
                                     exit={{ x: 20, opacity: 0 }}
                                     onSubmit={handleRegister}
-                                    className="space-y-6"
+                                    className="space-y-2 md:space-y-6"
                                 >
                                     <div className="space-y-2">
-                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">CODENAME</label>
+                                        <label htmlFor="" className="text-[10px] md:text-xs text-purple-300 font-mono tracking-wider">CODENAME</label>
                                         <div className="flex gap-2">
                                             <div className="relative flex-1 group">
                                                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
-                                                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter alias..." className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" maxLength={15} />
+                                                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter alias..." className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-1 md:py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" maxLength={15} />
 
                                             </div>
-                                            <button type="button" onClick={handleRandomize} className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 hover:text-purple-400 text-gray-400 transition-colors" title="Randomize">
-                                                <Dice5 size={20} />
+                                            <button type="button" onClick={handleRandomize} className="p-1 md:p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 hover:text-purple-400 text-gray-400 transition-colors" title="Randomize">
+                                                <Dice5 className="md:w-8 w-5" />
                                             </button>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">DATE OF BIRTH</label>
+                                        <label htmlFor="" className="text-[10px] md:text-xs text-purple-300 font-mono tracking-wider">DATE OF BIRTH</label>
                                         <div className="relative group">
                                             <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
-                                            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
+                                            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-1 md:py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
                                         </div>
                                         <p className="text-[10px] text-gray-600 font-mono text-right">RESTRICTED: 12+</p>
                                     </div>
@@ -152,22 +152,22 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
                                     className="space-y-6"
                                 >
                                     <div className="space-y-2">
-                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">USERNAME / EMAIL</label>
+                                        <label htmlFor="" className="text-[10px] md:text-xs text-purple-300 font-mono tracking-wider">USERNAME / EMAIL</label>
 
                                         <div className="relative group">
                                             <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
-                                            <input type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
+                                            <input type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-1 md:py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label htmlFor="" className="text-xs text-purple-300 font-mono tracking-wider">PASSPHRASE</label>
+                                        <label htmlFor="" className="text-[10px] md:text-xs text-purple-300 font-mono tracking-wider">PASSPHRASE</label>
 
                                         <div className="relative group">
                                             <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-purple-400 transition-colors" />
 
-                                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
+                                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-1 md:py-3 text-white focus:border-purple-500 outline-none transition-all font-mono" />
 
                                         </div>
                                     </div>
@@ -200,10 +200,10 @@ export default function AuthPage({ onAuthComplete }: { onAuthComplete: () => voi
 
 function SubmitButton({ loading, label, icon }: any) {
     return (
-        <button disabled={loading} className="px-8 py-3 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
+        <button disabled={loading} className="md:text-base text-xs px-8 py-3 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-widest skew-x-[-10deg] shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all active:scale-95">
             <div className="flex items-center justify-center gap-2 skew-x-[10deg]">
                 {loading ? (
-                    <span className="animate-pulse">SYNCHRONIZING...</span>
+                    <span className="animate-pulse ">SYNCHRONIZING...</span>
                 ) : (
                     <>
                         {icon || <ArrowRight size={18} />}

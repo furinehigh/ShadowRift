@@ -4,19 +4,44 @@ import { BotInputs, Building, PlayerState } from "@/types/types"
 const SIGHT_RANGE = 800
 const ATTACK_RANGE = 30
 
+interface EnemyAIState extends PlayerState {
+    variant?: 'grunt' | 'elite' | 'boss'
+    maxHp?: number
+}
+
 export const calculateBotInputs = (
-    me: PlayerState,
+    me: EnemyAIState,
     target: PlayerState,
     buildings: Building[],
-    dt: number
+    dt: number,
+    aggression: number = 0.01
 ): BotInputs => {
     const inputs: BotInputs = { left: false, right: false, jump: false, punch: false, kick: false, rift: false }
 
     if (me.isDead || target.isDead) return inputs
 
-    if (me.realm !== target.realm) {
-        inputs.rift = true
+    const isLowHp = (me.hp < (me.maxHp || 100) * 0.3)
+    const isSmart = me.variant === 'elite' || me.variant === 'boss'
 
+    if (isSmart && isLowHp && me.realm === target.realm) {
+        if (Date.now() > me.stunUntil) {
+            inputs.rift = true
+        }
+    }
+
+    if (me.realm !== target.realm) {
+        if (isSmart && isLowHp) {
+
+            const dx = target.x - me.x
+            if (Math.abs(dx) < 300) {
+                if (dx> 0) inputs.left = true
+                else inputs.right = true
+            }
+
+            return inputs
+        }
+
+        inputs.rift = true
         return inputs
     }
 
@@ -34,8 +59,10 @@ export const calculateBotInputs = (
     if (Math.abs(dx) < ATTACK_RANGE && Math.abs(dy) < 50) {
         if (me.isGrounded) {
 
-            if (Math.random() > 0.99) inputs.punch = true
-            else if (Math.random() > 0.99) inputs.kick = true
+            const attackChance = 0.01 + aggression
+
+            if (Math.random() < attackChance) inputs.punch = true
+            else if (Math.random() < attackChance) inputs.kick = true
 
         }
         if (dx > 0 && !me.facingRight) {

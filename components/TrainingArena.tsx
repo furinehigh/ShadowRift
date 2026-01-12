@@ -23,7 +23,7 @@ import { audioController } from "@/lib/audioController"
 
 const MAX_AUDIBLE_DISTANCE = 1000
 
-const ENEMY_SPEED = {
+const BASE_ENEMY_SPEED = {
     grunt: 240,
     elite: 300,
     boss: 350
@@ -35,7 +35,7 @@ const SCORE_VALUES = {
     boss: 1000
 }
 
-const ENEMY_ATTACK_DAMAGE = {
+const BASE_ENEMY_DAMAGE = {
     grunt: {
         kick: 2,
         punch: 1
@@ -68,9 +68,6 @@ const PLAYER_HEAL_DELAY = 4000
 const PLAYER_HEAL_RATE = 10
 
 const ENEMY_WAKE_DISTANCE = 800
-const ENEMY_HARD_SLEEP_DISTANCE = 1200
-
-const UI_SYNC_MS = 300
 
 const getSpawnDelay = (wave: number) => {
     const difficultyCurve = Math.max(
@@ -83,6 +80,16 @@ const getSpawnDelay = (wave: number) => {
     return difficultyCurve - chaos
 }
 
+const getWaveStats = (wave: number) => {
+    const speedMult = Math.min(2.5, 1 + (wave * 0.05))
+
+    const damageMult = 1 + (wave * 0.10)
+
+    const aggression = 0.01 + (wave * 0.002)
+
+    return {speedMult, damageMult, aggression}
+}
+
 
 interface Enemy extends PlayerState {
     id: string
@@ -92,6 +99,9 @@ interface Enemy extends PlayerState {
     deathTime?: number
     isAwake?: boolean
     fadeDone?: boolean
+    speed: number
+    damageMult: number
+    aggression: number
 }
 
 interface HighScore {
@@ -238,6 +248,8 @@ export default function TrainingArena() {
     }
 
     const queueWave = (waveNumber: number) => {
+        const {speedMult, damageMult, aggression} = getWaveStats(waveNumber)
+
         const count = 2 + Math.floor(waveNumber * 1.5)
         // const newEnemies: Enemy[] = []
         currentSpawnDelay.current = getSpawnDelay(waveNumber)
@@ -247,13 +259,20 @@ export default function TrainingArena() {
 
         for (let i = 0; i < count; i++) {
             const isBoss = i === count - 1 && waveNumber % 3 === 0
-            const isElite = Math.random() > 0.7
+            const isElite = !isBoss && (Math.random() > (0.7 - (waveNumber * 0.01)))
 
             const spawn = getSafeSpawn(currentBuildingSet, windowHeight)
 
             const randomOffsetX = (Math.random() * 40) - 20
 
-            const maxHp = isBoss ? 500 : (isElite ? 200 : 100)
+            const hpMult = 1 + (waveNumber * 0.05)
+            const baseHp = isBoss ? 500 : (isElite ? 200 : 100)
+            
+            const maxHp = Math.floor(baseHp * hpMult)
+
+            const baseSpeed = BASE_ENEMY_SPEED[isBoss ? 'boss' : (isElite ? 'elite' : 'grunt')]
+            const finalSpeed = baseSpeed * speedMult
+
             spawnQueue.current.push({
                 id: crypto.randomUUID(),
                 x: spawn.x + randomOffsetX,
@@ -264,7 +283,10 @@ export default function TrainingArena() {
                 height: PLAYER_H,
                 isGrounded: false,
                 isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: maxHp, maxHp, lastHitTime: 0, isClimbing: false, climbLockX: null, climbTargetY: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null,
-                variant: isBoss ? 'boss' : (isElite ? 'elite' : 'grunt'), isAwake: false
+                variant: isBoss ? 'boss' : (isElite ? 'elite' : 'grunt'), isAwake: false,
+                speed: finalSpeed,
+                damageMult,
+                aggression
             })
 
 
@@ -413,6 +435,13 @@ export default function TrainingArena() {
                 continue
             }
 
+            if (!enemy.isDead && !enemy.isDying && enemy.hp < enemy.maxHp) {
+                const timeSinceHit = now - enemy.lastHitTime
+                if (timeSinceHit > 4000) {
+                    enemy.hp = Math.min(enemy.maxHp, enemy.hp + (10 * dt))
+                }
+            }
+
             const dx = Math.abs(enemy.x - player.x)
             if (!enemy.isAwake) {
                 if (dx < ENEMY_WAKE_DISTANCE && enemy.realm === player.realm) enemy.isAwake = true
@@ -431,7 +460,7 @@ export default function TrainingArena() {
                 continue
             }
 
-            const botInputs = calculateBotInputs(enemy, p1.current, botBuildings, dt)
+            const botInputs = calculateBotInputs(enemy, p1.current, botBuildings, dt, enemy.aggression)
 
             enemy.vx = 0
 
@@ -441,11 +470,12 @@ export default function TrainingArena() {
                     enemy.lastRiftSwitch = now
                     enemy.realm = enemy.realm === 'normal' ? 'rift' : 'normal'
                     enemy.isClimbing = false
+                    const enemyVol = getSpatialVolume(enemy.x)
                     playSound('rift', enemyVol)
                 }
             }
 
-            const speed = ENEMY_SPEED[enemy.variant] || 250
+            const speed = enemy.speed
 
             if (!enemy.isClimbing) {
 
@@ -460,6 +490,7 @@ export default function TrainingArena() {
                 }
                 if (botInputs.jump && enemy.isGrounded) {
                     enemy.vy = JUMP_FORCE
+                    const enemyVol = getSpatialVolume(enemy.x)
                     playSound('jump', enemyVol)
                 }
             }
@@ -501,12 +532,6 @@ export default function TrainingArena() {
             handlePlayerDeath(true)
         }
 
-        // if (now - lastUiSync.current > UI_SYNC_MS) {
-        //     lastUiSync.current = now
-
-        //     setEnemiesUi(arr.slice())
-        // }
-
         if (now - lastCamSync.current > 10) {
             lastCamSync.current = now
             setCamUi({
@@ -516,27 +541,6 @@ export default function TrainingArena() {
         }
 
     })
-
-    // const respawnPlayer = (p: PlayerState, buildings: Building[], floorY: number) => {
-    //     p.isDead = true
-
-    //     setTimeout(() => {
-    //         const spawn = getSafeSpawn(buildings, floorY)
-
-    //         p.x = spawn.x
-    //         p.y = spawn.y
-    //         p.vx = 0
-    //         p.vy = 0
-
-    //         p.hp = 100
-    //         setPlayerHp(100)
-    //         p.isDead = false
-    //         p.isClimbing = false
-    //         p.isGrounded = false
-
-    //         playSound('rift')
-    //     }, RESPAWN_DELAY)
-    // }
 
 
     const checkAttackHit = (attacker: any, victim: any, isVictimPlayer: boolean, attackType: 'punch' | 'kick') => {
@@ -565,13 +569,15 @@ export default function TrainingArena() {
 
         let damage = 0
         if (isVictimPlayer) {
-            const variant = attacker.variant as keyof typeof ENEMY_ATTACK_DAMAGE
-            damage = ENEMY_ATTACK_DAMAGE[variant][attackType]
+            const variant = attacker.variant as keyof typeof BASE_ENEMY_DAMAGE
+            const baseDmg = BASE_ENEMY_DAMAGE[variant][attackType]
+
+            damage = baseDmg * (attacker.damageMult || 1)
         } else {
             damage = PLAYER_ATTACK_DAMAGE[attackType]
         }
 
-        victim.hp -= damage
+        victim.hp -= Math.ceil(damage)
 
         const now = Date.now()
         victim.stunUntil = now + (isVictimPlayer ? 300 : 800)
