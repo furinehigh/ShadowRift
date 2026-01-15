@@ -19,6 +19,7 @@ import EnemyIndicators from "./game/EnemyIndicators"
 import { Skull, Target, Timer, Trophy } from "lucide-react"
 import GameLayer from "./game/GameLayer"
 import { audioController } from "@/lib/audioController"
+import GameOverModal from "./modals/GameOver"
 
 
 const MAX_AUDIBLE_DISTANCE = 1000
@@ -683,69 +684,7 @@ export default function TrainingArena() {
                 )}
             </AnimatePresence>
 
-            <AnimatePresence>
-                {isGameOver && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-100 bg-black/80 flex items-center justify-center backdrop-blur-sm"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            className="bg-zinc-900 border-2 border-red-900/50 p-8 rounded-xl w-full max-w-md shadow-2xl relative overflow-hidden"
-                        >
-                            {/* <div className="absolute top-0 left-1/3 opacity-5 pointer-events-none">
-                                <Skull size={200} className="text-red-500" />
-                            </div> */}
-
-                            <h2 className="text-4xl font-custom text-red-500 mb-2 tracking-tighter uppercase text-center drop-shadow-lg">
-                                You Died
-                            </h2>
-
-                            <div className="flex justify-center mb-3">
-                                <div className="text-zinc-400 text-xs font-mono bg-zinc-950/50 px-3 py-1 rounded">
-                                    WAVE {wave} REACHED
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-center mb-6">
-                                <div className="flex flex-col items-center">
-                                    <span className="text-6xl font-bold text-white">{score}</span>
-                                    {/* <span className="text-sm text-zinc-500 uppercase font-bold">Total Score</span> */}
-                                </div>
-                                <span className="text-xs text-zinc-500 uppercase font-bold">Killed {kills} enemies</span>
-
-                            </div>
-
-                            <div className="mb-6">
-                                <div className="flex items-center gap-2 mb-2 text-yellow-500">
-                                    <Trophy size={20} />
-                                    <span className="text-sm font-bold uppercase tracking-wider">High Scores</span>
-                                </div>
-                                <div className="p-3 space-y-1">
-                                    {highScores.length > 0 ? highScores.map((hs, idx) => (
-                                        <div key={idx} className={`flex justify-between text-sm ${idx === 0 ? 'text-yellow-400 font-bold' : 'text-zinc-400'}`}>
-                                            <span>#{idx + 1} - {hs.date}</span>
-                                            <span>{hs.score}</span>
-                                        </div>
-                                    )) : (
-                                        <div className="text-zinc-600 text-xs text-center py-2">
-                                            No high scores yet
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col items-center justify-center pt-4 border-t border-zinc-800">
-                                <span className="text-zinc-500 text-xs uppercase font-bold mb-2">Respawing in <span className="text-white">{respawnTimer}</span> seconds...</span>
-
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <GameOverModal isGameOver={isGameOver} wave={wave} score={score} kills={kills} highScores={highScores} respawnTimer={respawnTimer} />
 
             <AnimatePresence>
                 {showSettings && (
