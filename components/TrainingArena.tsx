@@ -353,7 +353,7 @@ export default function TrainingArena() {
 
                     p1.current.highJumpTimer! += dt * 1000
                     if (p1.current.highJumpTimer! > HIGH_JUMP_THRESHOLD && !p1.current.didHighJumpVoice) {
-                        playSound('voice-whoa')
+                        playSound('voice-whoa', 0.4)
                         
                         p1.current.didHighJumpVoice = true
                     }

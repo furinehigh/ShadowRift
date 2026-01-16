@@ -134,10 +134,10 @@ function StartPage() {
 
       {gameState === 'menu' && (
         <div className='relative z-20 w-full h-full flex flex-col items-center justify-between py-12'>
-          {/* <div className='w-full flex justify-between px-8 '>
+          <div className='w-full flex justify-between px-8 '>
             <MenuButton icon={<Settings />} label='SETTINGS' delay={0.2} onClick={() => setShowSettings(true)} />
             <MenuButton icon={<ShoppingBag className='' />} label='SHOP' delay={0.3} onClick={() => setShowShop(true)} />
-          </div> */}
+          </div>
 
           <div className={`flex-1 flex flex-col items-center justify-center relative transition-all duration-500 ${isModalOpen ? 'opacity-0 scale-90 blur-sm' : 'opacity-100'}`}>
             <motion.div
