@@ -35,3 +35,9 @@ In this mode you have to fight all the random enemies the game will throw at you
 - **Audio Settings** is where players can adjust all kinds of volumes and audios.
 - **Control Settings** is where players can update their game controls on both PCs and mobiles.
 Reset defaults and apply changes buttons works properly.
+
+
+# Known bugs or glitches
+- Players on low end devices might experience `no wall on buildings`, it means that they might fall if they try to hit any building's walls.. will fix this in upcomming updates.
+
+Feel free to list all the bugs and glitches you r facing during the gameplay.
