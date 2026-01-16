@@ -8,8 +8,6 @@ import { useSettings } from "@/context/SettingsContext"
 
 const MUSIC_TRACKS = [
     {id: 'city-drums.mp3', name: 'City Drums'},
-    {id: 'neon-drift.mp3', name: 'Neon Drift'},
-    {id: 'void-echo.mp3', name: 'Void Echo'}
 ]
 
 type Tab = 'graphics' | 'audio' | 'controls' | 'gameplay'
