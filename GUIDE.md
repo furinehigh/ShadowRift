@@ -5,7 +5,7 @@ Note: This game is currently not fully responsive, so try to play it on large de
 # Default controls (PC or with keyboard)
 - `w` or `←` to move left
 - `d` or `→` to move right
-- `↑` or `space` to jump
+- `↑` or `space` to jump + hold one of these keys to jump higher
 - `z` to punch
 - `x` to kick
 - `r` to toggle the RIFT realm (there is a cooldown of 5 seconds :)
@@ -31,3 +31,7 @@ In this mode you have to fight all the random enemies the game will throw at you
 - Elite - these are decent enemies with decent attack power.
 - Boss - these are the highest rank enemies in the training mode and have attack power equivalent to the players + gives u more score when killed.
 
+# Settings
+- **Audio Settings** is where players can adjust all kinds of volumes and audios.
+- **Control Settings** is where players can update their game controls on both PCs and mobiles.
+Reset defaults and apply changes buttons works properly.
