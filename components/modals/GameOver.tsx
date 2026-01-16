@@ -81,7 +81,7 @@ export default function GameOverModal({
 
                             <div className="spacy-y-1">
                                 {highScores.length > 0 ? (
-                                    highScores.slice(0, 5).map((hs: any, idx: number) => {
+                                    highScores.slice(0, 5).map((hs: any, idx: number) => (
                                         <div key={idx} className="flex justify-between items-center text-xs font-mono px-2 py-1 rounded bg-white/3 border border-white/6 text-white/70">
                                             <span className="text-white/80">
                                                 #{idx + 1} · {hs.date} 
@@ -90,7 +90,7 @@ export default function GameOverModal({
                                                 {hs.score}
                                             </span>
                                         </div>
-                                    })
+                                    ))
                                 ) : (
                                     <div className="text-white/30 text-xs font-mono px-2 py-2 text-center border border-white/10 rounded bg-white/2">
                                         no records yet

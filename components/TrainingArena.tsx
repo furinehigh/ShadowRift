@@ -52,7 +52,11 @@ const BASE_ENEMY_DAMAGE = {
 }
 
 const RIFT_COOLDOWN = 5000
-const JUMP_FORCE = -850
+const MIN_JUMP_FORCE = -800
+const MAX_JUMP_FORCE = -1050
+const JUMP_BOOST = 800
+const HIGH_JUMP_THRESHOLD = 200
+
 const MOVE_SPEED = 450
 const PLAYER_W = 30
 const PLAYER_H = 70
@@ -144,15 +148,15 @@ export default function TrainingArena() {
     const riftBuildings = useRef<Building[]>([])
 
     const p1 = useRef<PlayerState>({
-        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0
+        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0, highJumpTimer: 0, didHighJumpVoice: false
     })
 
     const cameraX = useRef(0)
 
     const camera = useRef({ normal: 0, rift: 0 })
-    const inputs = useRef({ left: false, right: false, jump: false, kick: false, punch: false })
+    const inputs = useRef({ left: false, right: false, jump: false, kick: false, punch: false, jumpHeld: false })
 
-    const lastUiSync = useRef(0)
+    // const lastUiSync = useRef(0)
 
     const getSpatialVolume = (targetX: number) => {
         if (!p1.current) return 0
@@ -335,13 +339,28 @@ export default function TrainingArena() {
                     p1.current.facingRight = true
                 }
                 if (inputs.current.jump && p1.current.isGrounded) {
-                    p1.current.vy = JUMP_FORCE
+                    p1.current.vy = MIN_JUMP_FORCE
+                    p1.current.highJumpTimer = 0
+                    p1.current.didHighJumpVoice = false
                     inputs.current.jump = false
                     playSound('jump', 1.0)
                 }
+
+                if (p1.current.vy < 0 && inputs.current.jumpHeld && !p1.current.isGrounded) {
+                    p1.current.vy -= JUMP_BOOST * dt
+
+                    if (p1.current.vy < MAX_JUMP_FORCE) p1.current.vy = MAX_JUMP_FORCE
+
+                    p1.current.highJumpTimer! += dt * 1000
+                    if (p1.current.highJumpTimer! > HIGH_JUMP_THRESHOLD && !p1.current.didHighJumpVoice) {
+                        playSound('voice-whoa')
+                        
+                        p1.current.didHighJumpVoice = true
+                    }
+                }
             } else if (p1.current.isClimbing && !isStunned) {
                 if (inputs.current.jump) {
-                    p1.current.vy = JUMP_FORCE
+                    p1.current.vy = MIN_JUMP_FORCE
                     p1.current.vx = p1.current.facingRight ? -MOVE_SPEED : MOVE_SPEED
 
                     p1.current.isClimbing = false
@@ -490,7 +509,7 @@ export default function TrainingArena() {
 
                 }
                 if (botInputs.jump && enemy.isGrounded) {
-                    enemy.vy = JUMP_FORCE
+                    enemy.vy = MIN_JUMP_FORCE
                     const enemyVol = getSpatialVolume(enemy.x)
                     playSound('jump', enemyVol)
                 }
@@ -625,7 +644,12 @@ export default function TrainingArena() {
 
             if (k === keybinds.left || k === 'arrowleft') inputs.current.left = true
             if (k === keybinds.right || k === 'arrowright') inputs.current.right = true
-            if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = true
+
+
+            if (k === keybinds.jump || k === 'arrowup') {
+                if (!inputs.current.jumpHeld) inputs.current.jump = true
+                inputs.current.jumpHeld = true
+            }
             if (k === keybinds.kick) inputs.current.kick = true
             if (k === keybinds.punch) inputs.current.punch = true
 
@@ -638,7 +662,7 @@ export default function TrainingArena() {
             const k = e.key.toLowerCase()
             if (k === keybinds.left || k === 'arrowleft') inputs.current.left = false
             if (k === keybinds.right || k === 'arrowright') inputs.current.right = false
-            if (k === keybinds.jump || k === 'arrowup') inputs.current.jump = false
+            if (k === keybinds.jump || k === 'arrowup') inputs.current.jumpHeld = false
             if (k === keybinds.kick) inputs.current.kick = false
             if (k === keybinds.punch) inputs.current.punch = false
         }

@@ -1,6 +1,6 @@
 
 
-export type SountType = 'jump' | 'rift' | 'land' | 'climb' | 'death' | 'punch' | 'kick' | 'damage' | 'fall-death'
+export type SountType = 'jump' | 'rift' | 'land' | 'climb' | 'death' | 'punch' | 'kick' | 'damage' | 'fall-death' | 'voice-whoa'
 
 export type LoopType = 'run' | 'walk'
 

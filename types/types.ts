@@ -47,6 +47,8 @@ export type PlayerState = {
     hitAnim: string | null
     isDying: boolean
     lastHitTime:  number
+    highJumpTimer?: number
+    didHighJumpVoice?: boolean
 }
 
 export type Building = {
