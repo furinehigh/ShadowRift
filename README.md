@@ -32,4 +32,4 @@ This game is inspired by Shadow Fight + Mini militia (especially the training mo
 - Custom character and UI
 
 # AI usage
-AI usage is negligible and limited to the bugs fixes(frustrating ones :), I haven't used any kind of copilots either.
+AI usage is negligible and limited to the bugs fixes(frustrating ones :), I haven't used any kind of copilots either. I haven't touched AI to build any kind of assets for this game, every assets you see are manually created by me...:)
