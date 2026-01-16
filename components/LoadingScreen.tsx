@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react'
 const BG_ASSETS = [
   '/bg/far.png',
   '/bg/mid.png',
-  '/bg/near.png'
+  '/bg/near.png',
+  '/FIGHTER/FIGHTER_tex.png'
 ]
 
 const FONT_ASSETS = [
@@ -16,9 +17,26 @@ const FONT_ASSETS = [
   }
 ]
 
+const SOUND_ASSETS = [
+  '/sound/music/fight-bg.mp3',
+  '/sound/music/city-drums.mp3',
+  '/sound/sfx/climb.mp3',
+  '/sound/sfx/damage.mp3',
+  '/sound/sfx/death.mp3',
+  '/sound/sfx/fall-death.mp3',
+  '/sound/sfx/jump.mp3',
+  '/sound/sfx/kick.mp3',
+  '/sound/sfx/land.mp3',
+  '/sound/sfx/panting.mp3',
+  '/sound/sfx/punch.mp3',
+  '/sound/sfx/rift.mp3',
+  '/sound/sfx/run.mp3',
+  '/sound/sfx/voice-whoa.mp3',
+]
+
 function LoadingScreen({ onComplete }: { onComplete?: () => void }) {
   const [loaded, setLoaded] = useState(0)
-  const total = BG_ASSETS.length + FONT_ASSETS.length
+  const total = BG_ASSETS.length + FONT_ASSETS.length + SOUND_ASSETS.length
 
   useEffect(() => {
     let cancelled = false
@@ -47,6 +65,33 @@ function LoadingScreen({ onComplete }: { onComplete?: () => void }) {
       img.src = src
       img.onload = tick
       img.onerror = tick
+    })
+
+
+    SOUND_ASSETS.forEach(src => {
+      const audio = new Audio()
+
+      const handleLoad = () => {
+        tick()
+        cleanup()
+      }
+
+      const handleError = () => {
+        tick()
+        cleanup()
+      }
+
+      const cleanup = () => {
+        audio.removeEventListener('canplaythrough', handleLoad)
+        audio.removeEventListener('error', handleError)
+      }
+
+      audio.addEventListener('canplaythrough', handleLoad)
+      audio.addEventListener('error', handleError)
+
+      audio.preload = 'auto'
+      audio.src = src
+      audio.load()
     })
 
     return () => {
