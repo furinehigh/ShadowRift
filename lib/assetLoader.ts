@@ -6,7 +6,7 @@ const DB_CONFIG = {
     name: 'fighter',
     ske: '/FIGHTER/FIGHTER_ske.json',
     tex: '/FIGHTER/FIGHTER_tex.json',
-    image: 'https://i.api.dishis.tech/i/o3uZUB'
+    image: '/FIGHTER/FIGHTER_tex.png'
 }
 
 let loaded = false
