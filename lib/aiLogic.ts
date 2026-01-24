@@ -59,7 +59,7 @@ export const calculateBotInputs = (
     if (Math.abs(dx) < ATTACK_RANGE && Math.abs(dy) < 50) {
         if (me.isGrounded) {
 
-            const attackChance = 0.01 + aggression
+            const attackChance = aggression > 0 ? 0.01 + aggression : 0
 
             if (Math.random() < attackChance) inputs.punch = true
             else if (Math.random() < attackChance) inputs.kick = true

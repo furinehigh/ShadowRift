@@ -20,6 +20,7 @@ import { Skull, Target, Timer, Trophy } from "lucide-react"
 import GameLayer from "./game/GameLayer"
 import { audioController } from "@/lib/audioController"
 import GameOverModal from "./modals/GameOver"
+import TutorialOverlay, { TutorialStep } from "./game/TutorialOverlay"
 
 
 const MAX_AUDIBLE_DISTANCE = 1000
@@ -92,7 +93,7 @@ const getWaveStats = (wave: number) => {
 
     const aggression = 0.01 + (wave * 0.002)
 
-    return {speedMult, damageMult, aggression}
+    return { speedMult, damageMult, aggression }
 }
 
 
@@ -122,7 +123,7 @@ export default function TrainingArena() {
 
     const [isPaused, setIsPaused] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
-
+    const [tutorialStep, setTutorialStep] = useState<TutorialStep>('ASK')
 
     const [wave, setWave] = useState(1)
 
@@ -140,10 +141,10 @@ export default function TrainingArena() {
     const [respawnTimer, setRespawnTimer] = useState(5)
     const [highScores, setHighScores] = useState<HighScore[]>([])
 
-    const [camUi, setCamUi] = useState({normal: 0, rift: 0})
+    const [camUi, setCamUi] = useState({ normal: 0, rift: 0 })
     const lastCamSync = useRef(0)
 
-
+    const tutorialTimer = useRef(0)
     const normalBuildings = useRef<Building[]>([])
     const riftBuildings = useRef<Building[]>([])
 
@@ -171,10 +172,54 @@ export default function TrainingArena() {
         setP1Realm('normal')
         enemiesRef.current = []
         spawnQueue.current = []
-        queueWave(1)
+        // queueWave(1)
         loadHighScore()
 
     }, [])
+
+    const skipTutorial = () => {
+        setTutorialStep('NONE')
+        queueWave(1)
+    }
+
+    const startTutorial = () => {
+        setTutorialStep('MOVE')
+
+        if (p1.current) {
+            const spawn = getSafeSpawn(normalBuildings.current, windowHeight)
+            p1.current.x = spawn.x
+            p1.current.y = spawn.y
+        }
+    }
+
+    const spawnTutorialDummy = () => {
+        if (!p1.current) return
+
+        const spawnX = p1.current.x + 300
+        const spawnY = p1.current.y
+
+        const dummy: Enemy = {
+            id: 'tutorial-dummy',
+            x: spawnX,
+            y: spawnY - 100,
+            vx: 0, vy: 0,
+            width: PLAYER_W, height: PLAYER_H,
+            isGrounded: false, isDead: false, isDying: false, facingRight: false,
+            realm: p1.current.realm,
+            lastRiftSwitch: 0,
+            hp: 50, maxHp: 50,
+            lastHitTime: 0, isClimbing: false, climbLockX: null, climbTargetY: null,
+            attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null,
+            variant: 'grunt',
+            isAwake: true,
+            speed: 50,
+            damageMult: 0,
+            aggression: 0
+        }
+
+        enemiesRef.current.push(dummy)
+        playSound('rift', 1.0)
+    }
 
     useEffect(() => {
         let interval: NodeJS.Timeout | undefined
@@ -253,7 +298,7 @@ export default function TrainingArena() {
     }
 
     const queueWave = (waveNumber: number) => {
-        const {speedMult, damageMult, aggression} = getWaveStats(waveNumber)
+        const { speedMult, damageMult, aggression } = getWaveStats(waveNumber)
 
         const count = 2 + Math.floor(waveNumber * 1.5)
         // const newEnemies: Enemy[] = []
@@ -272,7 +317,7 @@ export default function TrainingArena() {
 
             const hpMult = 1 + (waveNumber * 0.05)
             const baseHp = isBoss ? 500 : (isElite ? 200 : 100)
-            
+
             const maxHp = Math.floor(baseHp * hpMult)
 
             const baseSpeed = BASE_ENEMY_SPEED[isBoss ? 'boss' : (isElite ? 'elite' : 'grunt')]
@@ -307,18 +352,21 @@ export default function TrainingArena() {
         }
         const now = Date.now()
 
-        if (spawnQueue.current.length > 0 && now - lastSpawnTime.current > currentSpawnDelay.current) {
-            const newEnemy = spawnQueue.current.shift()
+        if (tutorialStep === 'NONE') {
+            if (spawnQueue.current.length > 0 && now - lastSpawnTime.current > currentSpawnDelay.current) {
+                const newEnemy = spawnQueue.current.shift()
 
-            if (newEnemy) {
-                enemiesRef.current.push(newEnemy)
-                lastSpawnTime.current = now
-                currentSpawnDelay.current = getSpawnDelay(wave)
+                if (newEnemy) {
+                    enemiesRef.current.push(newEnemy)
+                    lastSpawnTime.current = now
+                    currentSpawnDelay.current = getSpawnDelay(wave)
 
-                const enemyVol = getSpatialVolume(newEnemy.x)
-                playSound('rift', enemyVol)
+                    const enemyVol = getSpatialVolume(newEnemy.x)
+                    playSound('rift', enemyVol)
+                }
             }
         }
+
 
         const player = p1.current
         const isStunned = now < p1.current.stunUntil
@@ -354,7 +402,7 @@ export default function TrainingArena() {
                     p1.current.highJumpTimer! += dt * 1000
                     if (p1.current.highJumpTimer! > HIGH_JUMP_THRESHOLD && !p1.current.didHighJumpVoice) {
                         playSound('voice-whoa', 0.4)
-                        
+
                         p1.current.didHighJumpVoice = true
                     }
                 }
@@ -432,6 +480,60 @@ export default function TrainingArena() {
 
         if (player.realm === 'normal') camera.current.normal = player.x
         else camera.current.rift = player.x
+
+        if (tutorialStep !== "NONE" && tutorialStep !== 'ASK' && tutorialStep !== 'COMPLETE') {
+            const p = p1.current
+
+            switch (tutorialStep) {
+                case 'MOVE':
+                    if (Math.abs(p.vx) > 100) {
+                        tutorialTimer.current += dt
+                        if (tutorialTimer.current > 1.5) {
+                            setTutorialStep('JUMP')
+                            tutorialTimer.current = 0
+                            playSound('land')
+                        }
+                    }
+                    break;
+
+                case "JUMP":
+                    if (!p.isGrounded && p.vy < -100) {
+                        setTutorialStep('HIGH_JUMP')
+                        tutorialTimer.current = 0
+                    }
+                    break;
+
+                case 'HIGH_JUMP':
+                    if (inputs.current.jumpHeld && p.highJumpTimer! > 100) {
+                        if (p.isGrounded) {
+                            setTutorialStep('RIFT')
+                            playSound('voice-whoa')
+                        }
+                    }
+                    break;
+
+                case 'RIFT':
+                    if (now - p.lastRiftSwitch < 500) {
+                        tutorialTimer.current += dt
+                        if (tutorialTimer.current > 1.0) {
+                            spawnTutorialDummy()
+                            setTutorialStep('COMBAT')
+                        }
+                    }
+                    break
+
+                case 'COMBAT':
+                    if (enemiesRef.current.length === 0 && enemiesRef.current.every(e => e.isDead || e.fadeDone)) {
+                        setTutorialStep('COMPLETE')
+                        setTimeout(() => {
+                            setTutorialStep('NONE')
+                            resetGame()
+                            queueWave(1)
+                        }, 3000)
+                    }
+                    break
+            }
+        }
 
         const arr = enemiesRef.current
 
@@ -702,6 +804,8 @@ export default function TrainingArena() {
     return (
         <div className="flex w-full h-full relative overflow-hidden select-none bg-white">
 
+            <TutorialOverlay step={tutorialStep} onAccept={startTutorial} onDecline={skipTutorial} />
+
             <AnimatePresence>
                 {isPaused && !showSettings && !isEditingHud && (
                     <PauseMenu onResume={() => setIsPaused(false)} onSettings={() => setShowSettings(true)} onExit={handleExit} isOnline={false} />
@@ -767,20 +871,22 @@ export default function TrainingArena() {
             <TrainingHUD wave={wave} enemiesRef={enemiesRef} player={playerForHud} />
             <EnemyIndicators enemiesRef={enemiesRef} player={p1.current} width={windowWidth} height={windowHeight} />
 
-            <MobileControls
-                onJump={() => inputs.current.jump = true}
-                onLeft={(a) => inputs.current.left = a}
-                onRight={(a) => inputs.current.right = a}
-                onAttack={(t: string) => {
-                    if (t === 'KICK') {
-                        inputs.current.kick = true
-                    } else {
-                        inputs.current.punch = true
-                    }
-                }}
-                onPause={() => setIsPaused(true)}
-                onRift={handleRiftSwitch}
-            />
+            {tutorialStep !== 'ASK' &&
+                <MobileControls
+                    onJump={() => inputs.current.jump = true}
+                    onLeft={(a) => inputs.current.left = a}
+                    onRight={(a) => inputs.current.right = a}
+                    onAttack={(t: string) => {
+                        if (t === 'KICK') {
+                            inputs.current.kick = true
+                        } else {
+                            inputs.current.punch = true
+                        }
+                    }}
+                    onPause={() => setIsPaused(true)}
+                    onRift={handleRiftSwitch}
+                />
+            }
         </div>
     )
 }
