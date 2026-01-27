@@ -48,6 +48,7 @@ export default function TutorialOverlay({ step, onAccept, onDecline }: TutorialO
                         <p className="text-zinc-400 mb-6 text-sm font-mono">
                             New to the Shadow Rift? I strongly recommend running the combat simulation before entering the arena.
                         </p>
+                        
                         <div className="flex gap-4 justify-center font-mono">
                             <button onClick={onDecline} className="px-6 py-2 -skew-x-[10deg] bg-zinc-800 text-zinc-400 hover:bg-zinc-700 font-bold text-sm transition-colors">
                                 SKIP
@@ -153,7 +154,7 @@ function getStepContent(step: TutorialStep) {
                 <div className="flex gap-4 mb-2 items-center">
                     <div className="flex flex-col items-center">
                         <span className="text-[10px] text-zinc-400 mb-1">BACK</span>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 items-center">
                             <Key label="A" />
                             <span className="text-xs text-zinc-500">/</span>
                             <Key label="D"/>

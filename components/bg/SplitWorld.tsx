@@ -305,7 +305,7 @@ export default function SplitWorld() {
                 /> */}
             </div>
 
-            <MobileControls
+            {/* <MobileControls
                 onJump={() => inputs.current.jump = true}
                 onLeft={(active) => inputs.current.left = active}
                 onRight={(active) => inputs.current.right = active}
@@ -315,7 +315,7 @@ export default function SplitWorld() {
                     if (a === 'PUNCH') inputs.current.punch = true
                 }}
                 onPause={() => setIsPaused(true)}
-            />
+            /> */}
 
 
         </div>
