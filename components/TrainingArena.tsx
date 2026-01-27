@@ -206,13 +206,12 @@ export default function TrainingArena() {
     const spawnTutorialDummy = () => {
         if (!p1.current) return
 
-        const spawnX = p1.current.x + 300
-        const spawnY = p1.current.y
+        const spawn = getSafeSpawn(p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current, windowHeight)
 
         const dummy: Enemy = {
             id: 'tutorial-dummy',
-            x: spawnX,
-            y: spawnY - 100,
+            x: spawn.x,
+            y: spawn.y,
             vx: 0, vy: 0,
             width: PLAYER_W, height: PLAYER_H,
             isGrounded: false, isDead: false, isDying: false, facingRight: false,
