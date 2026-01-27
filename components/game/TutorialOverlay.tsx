@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Skull, Zap } from "lucide-react"
 
 
 
-export type TutorialStep = 'ASK' | 'MOVE' | 'JUMP' | 'HIGH_JUMP' | 'RIFT' | 'COMBAT' | 'COMPLETE' | 'NONE'
+export type TutorialStep = 'ASK' | 'MOVE' | 'JUMP' | 'HIGH_JUMP' | 'RIFT' | 'DODGE' | 'COMBAT' | 'COMPLETE' | 'NONE'
 
 interface TutorialOverlayProps {
     step: TutorialStep
@@ -144,6 +144,33 @@ function getStepContent(step: TutorialStep) {
                     <span className="text-sm font-mono text-zinc-200 max-w-md mx-auto leading-snug">
                         The world is split into two realms. Press <span className="text-purple-900 font-bold">R</span> to switch dimensions.
                         <br /><span className="text-xs text-white/60 mt-1 block">Warning: You will spawn at the same coordinates. Ensure the path is clear.</span>
+                    </span>
+                </div>
+            </>
+
+        case 'DODGE':
+            return <>
+                <div className="flex gap-4 mb-2 items-center">
+                    <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-zinc-400 mb-1">BACK</span>
+                        <div className="flex gap-1">
+                            <Key label="A" />
+                            <span className="text-xs text-zinc-500">/</span>
+                            <Key label="D"/>
+                        </div>
+                    </div>
+                    <span className="text-xl font-black text-white">+</span>
+                    <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-zinc-400 mb-1">DODGE</span>
+                        <Key label="SHIFT" width="w-20" />
+                    </div>
+                </div>
+                <div className="flex flex-col gap-1 drop-shadow-xl">
+                    <span className="text-2xl font-mono font-bold text-purple-900 tracking-wide uppercase">
+                        Evasive Maneuver
+                    </span>
+                    <span className="text-sm font-mono text-zinc-200 max-w-xs mx-auto leading-tight">
+                        While moving backwards, press <span className="text-purple-900 font-bold">SHIFT</span> to perform a dodge roll and evade attacks.
                     </span>
                 </div>
             </>

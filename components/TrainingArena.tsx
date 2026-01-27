@@ -75,6 +75,10 @@ const PLAYER_HEAL_RATE = 10
 
 const ENEMY_WAKE_DISTANCE = 800
 
+const DODGE_DURATION = 600
+const DODGE_SPEED = 550
+const DODGE_COOLDOWN = 1000
+
 const getSpawnDelay = (wave: number) => {
     const difficultyCurve = Math.max(
         MIN_SPAWN,
@@ -149,13 +153,13 @@ export default function TrainingArena() {
     const riftBuildings = useRef<Building[]>([])
 
     const p1 = useRef<PlayerState>({
-        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0, highJumpTimer: 0, didHighJumpVoice: false
+        x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0, highJumpTimer: 0, didHighJumpVoice: false, dodgeUntil: 0, lastDodgeTime: 0
     })
 
     const cameraX = useRef(0)
 
     const camera = useRef({ normal: 0, rift: 0 })
-    const inputs = useRef({ left: false, right: false, jump: false, kick: false, kickHeld: false, punch: false, punchHeld: false, jumpHeld: false })
+    const inputs = useRef({ left: false, right: false, jump: false, kick: false, kickHeld: false, punch: false, punchHeld: false, jumpHeld: false, dodge: false, dodgeHeld: false })
 
     // const lastUiSync = useRef(0)
 
@@ -214,7 +218,8 @@ export default function TrainingArena() {
             isAwake: true,
             speed: 50,
             damageMult: 0,
-            aggression: 0
+            aggression: 0,
+            dodgeUntil: 0, lastDodgeTime: 0
         }
 
         enemiesRef.current.push(dummy)
@@ -336,7 +341,8 @@ export default function TrainingArena() {
                 variant: isBoss ? 'boss' : (isElite ? 'elite' : 'grunt'), isAwake: false,
                 speed: finalSpeed,
                 damageMult,
-                aggression
+                aggression,
+                dodgeUntil: 0, lastDodgeTime: 0
             })
 
 
@@ -370,75 +376,102 @@ export default function TrainingArena() {
 
         const player = p1.current
         const isStunned = now < p1.current.stunUntil
+        const isDodging = now < player.dodgeUntil
         const playerBuildings = p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current
 
         if (!player.isDead && !player.isDying) {
 
-            p1.current.vx = 0
+            if (isDodging) {
 
-            if (!p1.current.isClimbing && !isStunned) {
-                if (inputs.current.left) {
-                    p1.current.vx = -MOVE_SPEED
-                    p1.current.facingRight = false
-                }
+            } else {
 
-                if (inputs.current.right) {
-                    p1.current.vx = MOVE_SPEED
-                    p1.current.facingRight = true
-                }
-                if (inputs.current.jump && p1.current.isGrounded) {
-                    p1.current.vy = MIN_JUMP_FORCE
-                    p1.current.highJumpTimer = 0
-                    p1.current.didHighJumpVoice = false
-                    inputs.current.jump = false
-                    playSound('jump', 1.0)
-                }
 
-                if (p1.current.vy < 0 && inputs.current.jumpHeld && !p1.current.isGrounded) {
-                    p1.current.vy -= JUMP_BOOST * dt
+                p1.current.vx = 0
 
-                    if (p1.current.vy < MAX_JUMP_FORCE) p1.current.vy = MAX_JUMP_FORCE
+                if (!p1.current.isClimbing && !isStunned) {
 
-                    p1.current.highJumpTimer! += dt * 1000
-                    if (p1.current.highJumpTimer! > HIGH_JUMP_THRESHOLD && !p1.current.didHighJumpVoice) {
-                        playSound('voice-whoa', 0.4)
+                    const canDodge = now - player.lastDodgeTime > DODGE_COOLDOWN && player.isGrounded
+                    if (inputs.current.dodge && canDodge) {
+                        const holdingBack = (player.facingRight && inputs.current.left) || (!player.facingRight && inputs.current.right)
 
-                        p1.current.didHighJumpVoice = true
+                        const noDirection = !inputs.current.left && !inputs.current.right
+
+                        if (holdingBack || noDirection) {
+                            player.dodgeUntil = now + DODGE_DURATION
+                            player.lastDodgeTime = now
+                            inputs.current.dodge = false
+
+                            player.vx = player.facingRight ? -DODGE_SPEED : DODGE_SPEED
+                            playSound('jump', 1.5)
+                        }
+                    }
+
+                    if (!isDodging) {
+
+                        if (inputs.current.left) {
+                            p1.current.vx = -MOVE_SPEED
+                            p1.current.facingRight = false
+                        }
+
+                        if (inputs.current.right) {
+                            p1.current.vx = MOVE_SPEED
+                            p1.current.facingRight = true
+                        }
+                        if (inputs.current.jump && p1.current.isGrounded) {
+                            p1.current.vy = MIN_JUMP_FORCE
+                            p1.current.highJumpTimer = 0
+                            p1.current.didHighJumpVoice = false
+                            inputs.current.jump = false
+                            playSound('jump', 1.0)
+                        }
+
+                        if (p1.current.vy < 0 && inputs.current.jumpHeld && !p1.current.isGrounded) {
+                            p1.current.vy -= JUMP_BOOST * dt
+
+                            if (p1.current.vy < MAX_JUMP_FORCE) p1.current.vy = MAX_JUMP_FORCE
+
+                            p1.current.highJumpTimer! += dt * 1000
+                            if (p1.current.highJumpTimer! > HIGH_JUMP_THRESHOLD && !p1.current.didHighJumpVoice) {
+                                playSound('voice-whoa', 0.4)
+
+                                p1.current.didHighJumpVoice = true
+                            }
+                        }
+                    }
+                } else if (p1.current.isClimbing && !isStunned) {
+                    if (inputs.current.jump) {
+                        p1.current.vy = MIN_JUMP_FORCE
+                        p1.current.vx = p1.current.facingRight ? -MOVE_SPEED : MOVE_SPEED
+
+                        p1.current.isClimbing = false
+                        inputs.current.jump = false
+                        playSound('jump', 1.0)
                     }
                 }
-            } else if (p1.current.isClimbing && !isStunned) {
-                if (inputs.current.jump) {
-                    p1.current.vy = MIN_JUMP_FORCE
-                    p1.current.vx = p1.current.facingRight ? -MOVE_SPEED : MOVE_SPEED
 
-                    p1.current.isClimbing = false
-                    inputs.current.jump = false
-                    playSound('jump', 1.0)
-                }
-            }
+                if (!isStunned && now > player.attackUntil) {
+                    if (inputs.current.punch) {
+                        p1.current.attackUntil = now + 500
+                        p1.current.attackAnim = 'PUNCH'
+                        inputs.current.punch = false
 
-            if (!isStunned && now > player.attackUntil) {
-                if (inputs.current.punch) {
-                    p1.current.attackUntil = now + 500
-                    p1.current.attackAnim = 'PUNCH'
-                    inputs.current.punch = false
-
-                    const arr = enemiesRef.current
-                    for (let i = 0; i < arr.length; i++) {
-                        const e = arr[i];
-                        if (!e.isDead && e.realm === p1.current.realm) checkAttackHit(p1.current, e, false, 'punch')
+                        const arr = enemiesRef.current
+                        for (let i = 0; i < arr.length; i++) {
+                            const e = arr[i];
+                            if (!e.isDead && e.realm === p1.current.realm) checkAttackHit(p1.current, e, false, 'punch')
+                        }
+                        playSound('punch', 1.0)
+                    } else if (inputs.current.kick) {
+                        p1.current.attackUntil = now + 500
+                        p1.current.attackAnim = 'LEG_ATTACK_1'
+                        inputs.current.kick = false
+                        const arr = enemiesRef.current
+                        for (let i = 0; i < arr.length; i++) {
+                            const e = arr[i];
+                            if (!e.isDead && e.realm === p1.current.realm) checkAttackHit(p1.current, e, false, 'kick')
+                        }
+                        playSound('kick', 1.0)
                     }
-                    playSound('punch', 1.0)
-                } else if (inputs.current.kick) {
-                    p1.current.attackUntil = now + 500
-                    p1.current.attackAnim = 'LEG_ATTACK_1'
-                    inputs.current.kick = false
-                    const arr = enemiesRef.current
-                    for (let i = 0; i < arr.length; i++) {
-                        const e = arr[i];
-                        if (!e.isDead && e.realm === p1.current.realm) checkAttackHit(p1.current, e, false, 'kick')
-                    }
-                    playSound('kick', 1.0)
                 }
             }
         }
@@ -515,6 +548,16 @@ export default function TrainingArena() {
                     if (now - p.lastRiftSwitch < 500) {
                         tutorialTimer.current += dt
                         if (tutorialTimer.current > 1.0) {
+                            spawnTutorialDummy()
+                            setTutorialStep('DODGE')
+                        }
+                    }
+                    break
+
+                case 'DODGE':
+                    if (now < p.dodgeUntil) {
+                        tutorialTimer.current += dt
+                        if (tutorialTimer.current > 0.5) {
                             spawnTutorialDummy()
                             setTutorialStep('COMBAT')
                         }
@@ -760,6 +803,11 @@ export default function TrainingArena() {
                 inputs.current.punchHeld = true
             }
 
+            if (k === keybinds.dodge) {
+                if (!inputs.current.dodgeHeld) inputs.current.dodge = true
+                inputs.current.dodgeHeld = true
+            }
+
             if (k === keybinds.rift) {
                 handleRiftSwitch()
             }
@@ -772,6 +820,7 @@ export default function TrainingArena() {
             if (k === keybinds.jump || k === 'arrowup') inputs.current.jumpHeld = false
             if (k === keybinds.kick) inputs.current.kickHeld = false
             if (k === keybinds.punch) inputs.current.punchHeld = false
+            if (k === keybinds.dodge) inputs.current.dodgeHeld = false
         }
 
 
@@ -904,6 +953,14 @@ export default function TrainingArena() {
                             } else {
                                 inputs.current.punchHeld = false
                             }
+                        }
+                    }}
+                    onDodge={(pressed) => {
+                        if (pressed) {
+                            if (!inputs.current.dodgeHeld) inputs.current.dodge = true
+                            inputs.current.dodgeHeld = true
+                        } else {
+                            inputs.current.dodgeHeld = false
                         }
                     }}
                     onPause={() => setIsPaused(true)}

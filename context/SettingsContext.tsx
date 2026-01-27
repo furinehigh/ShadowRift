@@ -11,7 +11,8 @@ const defaultKeybinds: Keybinds = {
     jump: ' ',
     punch: 'z',
     rift: 'r',
-    kick: 'x'
+    kick: 'x',
+    dodge: 'shift'
 }
 
 const defaultMobileLayout: MobileLayout = {

@@ -49,6 +49,8 @@ export type PlayerState = {
     lastHitTime:  number
     highJumpTimer?: number
     didHighJumpVoice?: boolean
+    dodgeUntil: number
+    lastDodgeTime: number
 }
 
 export type Building = {
@@ -78,6 +80,7 @@ export type ControlProps = {
     onRift: () => void
     onAttack: (a: 'PUNCH' | 'KICK', pressed: boolean) => undefined
     onPause: () => void
+    onDodge: (pressed: boolean) => void
 }
 
 export interface Keybinds {
@@ -87,6 +90,7 @@ export interface Keybinds {
     punch: string
     kick: string
     rift: string
+    dodge: string
 }
 
 export interface MobileLayout {

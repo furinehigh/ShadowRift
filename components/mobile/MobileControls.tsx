@@ -3,10 +3,10 @@
 import { useSettings } from "@/context/SettingsContext"
 import { ControlProps } from "@/types/types"
 import { motion } from "framer-motion"
-import { ArrowLeft, ArrowRight, ArrowUp, Check, GripHorizontal, HandFist, Pause, Radio, Zap } from "lucide-react"
+import { ArrowLeft, ArrowRight, ArrowUp, Check, GripHorizontal, HandFist, Pause, Radio, Shield, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 
-export default function MobileControls({ onJump, onLeft, onRight, onRift, onAttack, onPause }: ControlProps) {
+export default function MobileControls({ onJump, onLeft, onRight, onRift, onAttack, onPause, onDodge }: ControlProps) {
     const { mobileLayout, setMobileLayout, isEditingHud, setEditingHud } = useSettings()
 
     const [isMobile, setIsMobile] = useState(false)
@@ -102,6 +102,10 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
                     className={`flex gap-4 items-end pointer-events-auto ${isEditingHud ? 'border border-yellow-400/50 p-2 rounded-xl bg-yellow-400/10' : ''}`}>
                         <button className={btnClass} style={{ ...bg, borderColor: 'white' }} onClick={!isEditingHud ? onRift : undefined}>
                             <Radio />
+                        </button>
+
+                        <button className={btnClass} style={{...bg, borderColor: '#60a5fa'}} {...holdHandlers(onDodge)}>
+                            <Shield size={24} />
                         </button>
 
                         <button className={btnClass} style={bg} {...holdHandlers((p) => onAttack('KICK', p))}>

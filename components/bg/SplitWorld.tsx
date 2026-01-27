@@ -58,12 +58,12 @@ export default function SplitWorld() {
     
     // player refs
     const p1 = useRef<PlayerState>({
-        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null, isDying: false, stunUntil: 0, hitAnim: null, lastHitTime: 0
+        x: 100, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: true, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null, isDying: false, stunUntil: 0, hitAnim: null, lastHitTime: 0, highJumpTimer: 0, didHighJumpVoice: false, dodgeUntil: 0, lastDodgeTime: 0
     })
 
     const p2 = useRef<PlayerState & {id: string, variant: string}>({
         id: 'player-2', variant: 'elite',
-        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null, isDying: false, stunUntil: 0, hitAnim: null, lastHitTime: 0
+        x: 600, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackUntil: 0, attackAnim: null, isDying: false, stunUntil: 0, hitAnim: null, lastHitTime: 0, highJumpTimer: 0, didHighJumpVoice: false, dodgeUntil: 0, lastDodgeTime: 0
     })
 
     const cameras = useRef({ normal: 100, rift: 600 })
