@@ -71,12 +71,13 @@ export type Platform = {
 }
 
 export type ControlProps = {
-    onJump: () => void
+    onJump: (pressed: boolean) => void
     onLeft: (active: boolean) => void
     onRight: (active: boolean) => void
 
     onRift: () => void
-    onAttack: (a: string) => undefined
+    onAttack: (a: 'PUNCH' | 'KICK', pressed: boolean) => undefined
+    onPause: () => void
 }
 
 export interface Keybinds {

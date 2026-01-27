@@ -6,11 +6,7 @@ import { motion } from "framer-motion"
 import { ArrowLeft, ArrowRight, ArrowUp, Check, GripHorizontal, HandFist, Pause, Radio, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 
-interface MobileControlsPage extends ControlProps {
-    onPause: () => void;
-}
-
-export default function MobileControls({ onJump, onLeft, onRight, onRift, onAttack, onPause }: MobileControlsPage) {
+export default function MobileControls({ onJump, onLeft, onRight, onRift, onAttack, onPause }: ControlProps) {
     const { mobileLayout, setMobileLayout, isEditingHud, setEditingHud } = useSettings()
 
     const [isMobile, setIsMobile] = useState(false)
@@ -33,6 +29,12 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
     const btnClass = "w-16 h-16 rounded-full flex items-center justify-center text-white select-none active:scale-95 transition-transform backdrop-blur-sm border-2 border-[#4b4c9d] touch-none pointer-events-auto"
 
     const bg = { background: 'rgba(0,0,0,0.5)' }
+
+    const holdHandlers = (handler: (p: boolean) => void) => !isEditingHud ? {
+        onPointerDown: () => handler(true),
+        onPointerUp: () => handler(false),
+        onPointerLeave: () => handler(false)
+    } : {}
 
     return (
         <div className="absolute inset-0 z-49 pointer-events-none flex flex-col justify-end pb-8 px-4">
@@ -102,17 +104,17 @@ export default function MobileControls({ onJump, onLeft, onRight, onRift, onAtta
                             <Radio />
                         </button>
 
-                        <button className={btnClass} style={bg} onClick={!isEditingHud ? onAttack('KICK') : undefined}>
+                        <button className={btnClass} style={bg} {...holdHandlers((p) => onAttack('KICK', p))}>
                             <Zap />
 
                         </button>
 
-                        <button className={btnClass} style={bg} onClick={!isEditingHud ? onAttack('PUNCH') : undefined}>
+                        <button className={btnClass} style={bg} {...holdHandlers((p) => onAttack('PUNCH', p))}>
                             <HandFist />
 
                         </button>
 
-                        <button className={`${btnClass} w-20 h-20 mb-2`} style={{ backgroundColor: '#4b4c9d' }} onClick={!isEditingHud ? onJump : undefined}>
+                        <button className={`${btnClass} w-20 h-20 mb-2`} style={{ backgroundColor: '#4b4c9d' }} {...holdHandlers(onJump)}>
                             {isEditingHud ? <GripHorizontal /> : <ArrowUp size={32} />}
                         </button>
                     </motion.div>

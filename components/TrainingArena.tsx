@@ -155,7 +155,7 @@ export default function TrainingArena() {
     const cameraX = useRef(0)
 
     const camera = useRef({ normal: 0, rift: 0 })
-    const inputs = useRef({ left: false, right: false, jump: false, kick: false, punch: false, jumpHeld: false })
+    const inputs = useRef({ left: false, right: false, jump: false, kick: false, kickHeld: false, punch: false, punchHeld: false, jumpHeld: false })
 
     // const lastUiSync = useRef(0)
 
@@ -507,7 +507,6 @@ export default function TrainingArena() {
                     if (inputs.current.jumpHeld && p.highJumpTimer! > 100) {
                         if (p.isGrounded) {
                             setTutorialStep('RIFT')
-                            playSound('voice-whoa')
                         }
                     }
                     break;
@@ -752,8 +751,14 @@ export default function TrainingArena() {
                 if (!inputs.current.jumpHeld) inputs.current.jump = true
                 inputs.current.jumpHeld = true
             }
-            if (k === keybinds.kick) inputs.current.kick = true
-            if (k === keybinds.punch) inputs.current.punch = true
+            if (k === keybinds.kick) {
+                if (!inputs.current.kickHeld) inputs.current.kick = true
+                inputs.current.kickHeld = true
+            }
+            if (k === keybinds.punch) {
+                if (!inputs.current.punchHeld) inputs.current.punch = true
+                inputs.current.punchHeld = true
+            }
 
             if (k === keybinds.rift) {
                 handleRiftSwitch()
@@ -765,8 +770,8 @@ export default function TrainingArena() {
             if (k === keybinds.left || k === 'arrowleft') inputs.current.left = false
             if (k === keybinds.right || k === 'arrowright') inputs.current.right = false
             if (k === keybinds.jump || k === 'arrowup') inputs.current.jumpHeld = false
-            if (k === keybinds.kick) inputs.current.kick = false
-            if (k === keybinds.punch) inputs.current.punch = false
+            if (k === keybinds.kick) inputs.current.kickHeld = false
+            if (k === keybinds.punch) inputs.current.punchHeld = false
         }
 
 
@@ -873,14 +878,32 @@ export default function TrainingArena() {
 
             {tutorialStep !== 'ASK' &&
                 <MobileControls
-                    onJump={() => inputs.current.jump = true}
+                    onJump={(pressed) => {
+                        if (pressed) {
+                            if (!inputs.current.jumpHeld) inputs.current.jump = true
+                            inputs.current.jumpHeld = true
+                        } else {
+                            inputs.current.jumpHeld = false
+                        }
+                    }}
                     onLeft={(a) => inputs.current.left = a}
                     onRight={(a) => inputs.current.right = a}
-                    onAttack={(t: string) => {
+                    onAttack={(t: string, pressed: boolean) => {
                         if (t === 'KICK') {
-                            inputs.current.kick = true
+                            if (pressed) {
+                                if (!inputs.current.kickHeld) inputs.current.kick = true
+                                inputs.current.kickHeld = true
+                            } else {
+                                inputs.current.kickHeld = false
+                            }
                         } else {
-                            inputs.current.punch = true
+                            if (pressed) {
+
+                                if (!inputs.current.punchHeld) inputs.current.punch = true
+                                inputs.current.punchHeld = true
+                            } else {
+                                inputs.current.punchHeld = false
+                            }
                         }
                     }}
                     onPause={() => setIsPaused(true)}

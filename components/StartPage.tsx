@@ -146,14 +146,14 @@ function StartPage() {
               transition={{ duration: 1.2, type: 'spring' }}
               className='relatvie'
             >
-              <h1 className='font-custom text-7xl md:text-9xl text-white tracking-tighter text-shadow-glow text-center leading-tight'>
+              <h1 className='font-custom [@media(max-height:500px)]:text-6xl [@media(max-height:600px)]:text-7xl text-9xl text-white tracking-tighter text-shadow-glow text-center leading-tight'>
                 SHADOW<br />RIFT
               </h1>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1, duration: 1 }}
-                className='text-purple-400 text-xs tracking-[0.5rem] text-center mt-2 uppercase'
+                className='text-purple-400 [@media(max-height:500px)]:text-[10px] text-xs tracking-[0.5rem] text-center mt-2 uppercase'
               >
                 Dual Realm Combat
               </motion.div>
@@ -166,7 +166,7 @@ function StartPage() {
               whileTap={{ scale: 0.95 }}
               transition={{ delay: 0.2, type: 'spring' }}
               onClick={handlePlay}
-              className='mt-2 md:mt-12 group relative px-4 md:px-12 py-2 md:py-4 bg-white text-black font-bold md:text-xl skew-x-[-10deg] border-2 border-transparent hover:border-purple-500 hover:text-purple-600 tranistion-colors shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]'
+              className='[@media(max-height:500px)]:mt-2 mt-12 group relative [@media(max-height:500px)]:px-4 [@media(max-height:600px)]:px-7 px-12 [@media(max-height:500px)]:py-2 [@media(max-height:600px)]:py-3 py-4 bg-white text-black font-bold md:text-xl skew-x-[-10deg] border-2 border-transparent hover:border-purple-500 hover:text-purple-600 tranistion-colors shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]'
             >
               <span className='flex items-center gap-2'>
                 <Play fill='currentColor' /> PLAY
@@ -175,7 +175,7 @@ function StartPage() {
 
           </div>
 
-          <div className={`md:mt-0 mt-2 flex gap-4 md:gap-12 items-end justify-center transition-all duration-500 ${isModalOpen ? 'translate-y-20 opacity-0' : 'translate-y-0 opacity-100'}`}>
+          <div className={`mt-0 [@media(max-height:500px)]:mt-2 flex gap-4 md:gap-12 items-end justify-center transition-all duration-500 ${isModalOpen ? 'translate-y-20 opacity-0' : 'translate-y-0 opacity-100'}`}>
             <BottomNavButton onClick={() => setGameState('training')} label='TRAINING' delay={0.2} />
             <BottomNavButton disabled onClick={() => {}} label='FRIENDS' delay={0.3} />
             <BottomNavButton disabled onClick={() => {}} label='PROFILE' delay={0.2} />
@@ -234,7 +234,7 @@ function MenuButton({ icon, label, delay, onClick }: { icon: React.ReactNode, la
             ease: 'easeInOut',
             delay
           }}
-          className='relative text-gray-400'
+          className='relative text-gray-400 [@media(max-height:500px)]:hidden'
         >
           {icon}
           {/* <span className='absolute left-0 top-0 w-full h-0.5 bg-purple-400 opacity-0 group-hover:opacity-100 animate-pulse' /> */}

@@ -5,6 +5,7 @@ import { Gamepad2, Keyboard, Monitor, RotateCcw, Save, Smartphone, Volume2, X } 
 import { useEffect, useState } from "react"
 import { ModalShell } from "./modals/ModalShell"
 import { useSettings } from "@/context/SettingsContext"
+import { useGameStore } from "@/store/gameStore"
 
 const MUSIC_TRACKS = [
     {id: 'city-drums.mp3', name: 'City Drums'},
@@ -187,6 +188,7 @@ function ControlsSettings({onClose}: {onClose: () => void}) {
     const {keybinds, setKeybind, setEditingHud} = useSettings()
     const [listening, setListening] = useState<string | null>(null)
     const [isMobille, setIsMobile ] = useState(false)
+    const {gameState} = useGameStore()
 
     useEffect(() => {
         const checkMobile = () => {
@@ -219,7 +221,7 @@ function ControlsSettings({onClose}: {onClose: () => void}) {
 
     return (
         <div className="space-y-6 font-mono animate-slide-up duration-500">
-            {isMobille && <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-lg mb-8">
+            {isMobille && (gameState === 'training' || gameState === 'playing') && <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-lg mb-8">
                 <div className="flex items-center justify-between">
                     <div >
                         <h4 className="text-white font-bold flex items-center gap-2"><Smartphone size={16} /> MOBILE HUD</h4>
