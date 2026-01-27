@@ -75,8 +75,8 @@ const PLAYER_HEAL_RATE = 10
 
 const ENEMY_WAKE_DISTANCE = 800
 
-const DODGE_DURATION = 600
-const DODGE_SPEED = 550
+const DODGE_DURATION = 400
+const DODGE_SPEED = 300
 const DODGE_COOLDOWN = 1000
 
 const getSpawnDelay = (wave: number) => {
@@ -178,6 +178,12 @@ export default function TrainingArena() {
         spawnQueue.current = []
         // queueWave(1)
         loadHighScore()
+
+
+        const daa = localStorage.getItem('daa')
+        if (Boolean(daa)) {
+            skipTutorial()
+        }
 
     }, [])
 
@@ -376,11 +382,39 @@ export default function TrainingArena() {
 
         const player = p1.current
         const isStunned = now < p1.current.stunUntil
-        const isDodging = now < player.dodgeUntil
+        let isDodging = now < player.dodgeUntil
         const playerBuildings = p1.current.realm === 'normal' ? normalBuildings.current : riftBuildings.current
 
         if (!player.isDead && !player.isDying) {
+            if (inputs.current.dodge) {
+                const canDodge = now - player.lastDodgeTime > DODGE_COOLDOWN && player.isGrounded && !player.isClimbing
+                if (canDodge) {
+                    const holdingBack = (player.facingRight && inputs.current.left) || (!player.facingRight && inputs.current.right)
+    
+                    const noDirection = !inputs.current.left && !inputs.current.right
+    
+                    if (holdingBack || noDirection) {
+                        player.dodgeUntil = now + DODGE_DURATION
+                        player.lastDodgeTime = now
+                        // inputs.current.dodge = false
+    
+                        player.vx = player.facingRight ? -DODGE_SPEED : DODGE_SPEED
+                        playSound('jump', 0.2)
+                        isDodging = true
+                    }
+                }
 
+                inputs.current.dodge = false
+            }
+
+            if (isDodging) {
+
+                if (inputs.current.jump || inputs.current.kick || inputs.current.punch) {
+                    player.dodgeUntil = 0
+                    isDodging = false
+                }
+            } 
+            
             if (isDodging) {
 
             } else {
@@ -390,21 +424,6 @@ export default function TrainingArena() {
 
                 if (!p1.current.isClimbing && !isStunned) {
 
-                    const canDodge = now - player.lastDodgeTime > DODGE_COOLDOWN && player.isGrounded
-                    if (inputs.current.dodge && canDodge) {
-                        const holdingBack = (player.facingRight && inputs.current.left) || (!player.facingRight && inputs.current.right)
-
-                        const noDirection = !inputs.current.left && !inputs.current.right
-
-                        if (holdingBack || noDirection) {
-                            player.dodgeUntil = now + DODGE_DURATION
-                            player.lastDodgeTime = now
-                            inputs.current.dodge = false
-
-                            player.vx = player.facingRight ? -DODGE_SPEED : DODGE_SPEED
-                            playSound('jump', 1.5)
-                        }
-                    }
 
                     if (!isDodging) {
 
@@ -444,9 +463,9 @@ export default function TrainingArena() {
                         p1.current.vx = p1.current.facingRight ? -MOVE_SPEED : MOVE_SPEED
 
                         p1.current.isClimbing = false
-                        inputs.current.jump = false
                         playSound('jump', 1.0)
                     }
+                    inputs.current.jump = false
                 }
 
                 if (!isStunned && now > player.attackUntil) {

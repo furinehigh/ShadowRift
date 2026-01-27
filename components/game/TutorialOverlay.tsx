@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowLeft, ArrowRight, CheckCircle2, Skull, Zap } from "lucide-react"
+import { useEffect, useState } from "react"
 
 
 
@@ -30,7 +31,19 @@ const Key = ({ label, width = 'w-10', hold = false }: { label: string, width?: s
 )
 
 export default function TutorialOverlay({ step, onAccept, onDecline }: TutorialOverlayProps) {
+    const [DAA, setDAA] = useState(false)
     if (step === 'NONE') return null
+
+    const handleBtnClick = (type: 'accept' | 'decline') => {
+        if (DAA) {
+            localStorage.setItem('daa', 'true')
+        }
+        if (type === 'accept') {
+            onAccept()
+        } else {
+            onDecline()
+        }
+    }
 
     return (
         <AnimatePresence mode="wait">
@@ -48,12 +61,16 @@ export default function TutorialOverlay({ step, onAccept, onDecline }: TutorialO
                         <p className="text-zinc-400 mb-6 text-sm font-mono">
                             New to the Shadow Rift? I strongly recommend running the combat simulation before entering the arena.
                         </p>
-                        
+                        <div className="flex gap-2 text-zinc-300 font-mono mb-2 justify-center">
+                            <input type="checkbox" onChange={(e) => setDAA(e.target.checked)} name="daa" id="daa" className="w-4 bg-purple-500 fill-purple-500" />
+                            <label htmlFor="daa">Don't show this again</label>
+                        </div>
+
                         <div className="flex gap-4 justify-center font-mono">
-                            <button onClick={onDecline} className="px-6 py-2 -skew-x-[10deg] bg-zinc-800 text-zinc-400 hover:bg-zinc-700 font-bold text-sm transition-colors">
+                            <button onClick={() => handleBtnClick("decline")} className="px-6 py-2 -skew-x-[10deg] bg-zinc-800 text-zinc-400 hover:bg-zinc-700 font-bold text-sm transition-colors">
                                 SKIP
                             </button>
-                            <button onClick={onAccept} className="px-6 py-2 bg-purple-600 text-white hover:bg-purple-500 font-bold text-sm shadow-lg shadow-purple-600/20 transition-all hover:scale-105 -skew-x-[10deg]">
+                            <button onClick={() => handleBtnClick("accept")} className="px-6 py-2 bg-purple-600 text-white hover:bg-purple-500 font-bold text-sm shadow-lg shadow-purple-600/20 transition-all hover:scale-105 -skew-x-[10deg]">
                                 START TUTORIAL
                             </button>
                         </div>
@@ -172,6 +189,7 @@ function getStepContent(step: TutorialStep) {
                     </span>
                     <span className="text-sm font-mono text-zinc-200 max-w-xs mx-auto leading-tight">
                         While moving backwards, press <span className="text-purple-900 font-bold">SHIFT</span> to perform a dodge roll and evade attacks.
+                        <span className="text-xs text-white/60 mt-1 block">NOTE: There is a cooldown of 1 second before you can dodge again.</span>
                     </span>
                 </div>
             </>

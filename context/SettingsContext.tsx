@@ -32,7 +32,7 @@ const defaultAudio: AudioSettings = {
 
 const SettingsContext = createContext<SettingsContextType | null>(null)
 
-export function SettingsProvider({children} : {children: React.ReactNode}) {
+export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const [keybinds, setKeybinds] = useState<Keybinds>(defaultKeybinds)
     const [mobileLayout, setMobileLayoutState] = useState<MobileLayout>(defaultMobileLayout)
     const [audio, setAudio] = useState<AudioSettings>(defaultAudio)
@@ -51,10 +51,14 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
             const sLayout = localStorage.getItem('sr_mobile_layout')
             const sAudio = localStorage.getItem('sr_audio')
 
-            
-    
-            if (sKeys){
-                const parsed = JSON.parse(sKeys)
+
+
+            if (sKeys) {
+                let parsed = JSON.parse(sKeys)
+                if (Object.keys(parsed).length !== Object.keys(defaultKeybinds).length) {
+                    parsed = defaultKeybinds
+                    localStorage.setItem('sr_keybinds', JSON.stringify(defaultKeybinds))
+                }
                 setKeybinds(parsed)
                 setSavedKeybinds(parsed)
             }
@@ -65,7 +69,7 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
             }
             if (sAudio) {
                 const parsed = JSON.parse(sAudio)
-                const merged = {...defaultAudio, ...parsed}
+                const merged = { ...defaultAudio, ...parsed }
                 setAudio(merged)
                 setSavedAudio(merged)
             }
@@ -100,7 +104,7 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
     }, [keybinds, mobileLayout, loaded, audio, savedKeybinds, savedLayout, savedAudio])
 
     const setKeybind = (action: keyof Keybinds, key: string) => {
-        setKeybinds(prev => ({...prev, [action]: key.toLocaleLowerCase()}))
+        setKeybinds(prev => ({ ...prev, [action]: key.toLocaleLowerCase() }))
 
     }
 
@@ -109,7 +113,7 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
     }
 
     const setAudioSetting = <K extends keyof AudioSettings>(key: K, value: AudioSettings[K]) => {
-        setAudio(prev => ({...prev, [key]: value}))
+        setAudio(prev => ({ ...prev, [key]: value }))
     }
 
     const resetDefaults = () => {
@@ -130,7 +134,7 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
         setSavedAudio(audio)
         setHasUnsavedChanges(false)
     }
- 
+
     return (
         <SettingsContext.Provider value={{
             keybinds, setKeybind, mobileLayout, setMobileLayout, audio, setAudioSetting, isEditingHud, setEditingHud, resetDefaults, saveSettings, hasUnsavedChanges
@@ -143,6 +147,6 @@ export function SettingsProvider({children} : {children: React.ReactNode}) {
 export const useSettings = () => {
     const context = useContext(SettingsContext)
     if (!context) throw new Error('useSettings must be used within SettingsProvider')
-    
+
     return context
 }

@@ -7,8 +7,8 @@ import { GameLayerProps, PlayerState } from '@/types/types'
 import { loadGameAssets } from '@/lib/assetLoader'
 import { applyVariantStyle, getAnim } from '@/lib/game-utils'
 
-const ONE_SHOT_ANIMS = ['JUMPS', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH']
-const FAST_ANIMS = ['PUNCH', 'LEG_ATTACK_1', 'RUN']
+const ONE_SHOT_ANIMS = ['JUMPS', 'CLIMB', 'PUNCH', 'LEG_ATTACK_1', 'DEATH', 'BACKWARD_DODGE_ROLL']
+const FAST_ANIMS = ['PUNCH', 'LEG_ATTACK_1', 'RUN', 'BACKWARD_DODGE_ROLL']
 
 const DEATH_FADE_SPEED = 0.02
 
@@ -179,7 +179,14 @@ export default function GameLayer({ width, height, cameraRef, playerRef, enemies
                         const state = armature.animation.fadeIn(animName, 0.1, playTimes)
 
                         if (state) {
-                            state.timeScale = FAST_ANIMS.includes(animName) ? 1.5 : 1.0
+                            if (animName === 'BACKWARD_DODGE_ROLL') {
+                                state.timeScale = 5.0
+                            } else if (FAST_ANIMS.includes(animName)) {
+                                state.timeScale = 1.5
+                            }
+                            else {
+                                state.timeScale = 1.0
+                            }
 
                             if (animName === 'DEATH') state.resetToPose = false
                         }
