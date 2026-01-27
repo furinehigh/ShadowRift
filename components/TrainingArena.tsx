@@ -151,6 +151,7 @@ export default function TrainingArena() {
     const tutorialTimer = useRef(0)
     const normalBuildings = useRef<Building[]>([])
     const riftBuildings = useRef<Building[]>([])
+    const tutorialRealmStart = useRef<'normal' | 'rift'>('normal')
 
     const p1 = useRef<PlayerState>({
         x: 200, y: 300, vx: 0, vy: 0, width: PLAYER_W, height: PLAYER_H, isGrounded: false, isDead: false, isDying: false, facingRight: false, realm: 'normal', lastRiftSwitch: 0, hp: 100, isClimbing: false, climbTargetY: null, climbLockX: null, attackAnim: null, attackUntil: 0, stunUntil: 0, hitAnim: null, lastHitTime: 0, highJumpTimer: 0, didHighJumpVoice: false, dodgeUntil: 0, lastDodgeTime: 0
@@ -538,9 +539,9 @@ export default function TrainingArena() {
 
             switch (tutorialStep) {
                 case 'MOVE':
-                    if (Math.abs(p.vx) > 100) {
+                    if (inputs.current.left || inputs.current.right) {
                         tutorialTimer.current += dt
-                        if (tutorialTimer.current > 1.5) {
+                        if (tutorialTimer.current > 0.4) {
                             setTutorialStep('JUMP')
                             tutorialTimer.current = 0
                             playSound('land')
@@ -556,20 +557,19 @@ export default function TrainingArena() {
                     break;
 
                 case 'HIGH_JUMP':
-                    if (inputs.current.jumpHeld && p.highJumpTimer! > 100) {
+                    if (p.didHighJumpVoice) {
                         if (p.isGrounded) {
+                            tutorialRealmStart.current = p.realm
                             setTutorialStep('RIFT')
+                            tutorialTimer.current = 0
                         }
                     }
                     break;
 
                 case 'RIFT':
-                    if (now - p.lastRiftSwitch < 500) {
-                        tutorialTimer.current += dt
-                        if (tutorialTimer.current > 1.0) {
-                            spawnTutorialDummy()
-                            setTutorialStep('DODGE')
-                        }
+                    if (p.realm !== tutorialRealmStart.current) {
+                        setTutorialStep('DODGE')
+                        tutorialTimer.current = 0
                     }
                     break
 
